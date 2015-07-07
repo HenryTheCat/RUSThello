@@ -3,18 +3,18 @@
 // by Enrico Ghiorzi
 
 // Import the reversi lib
-extern crate RUSTello;
+extern crate RUSThello;
 
 // Declare the modules to use
-use RUSTello::game;
-use RUSTello::interface;
+use RUSThello::game;
+use RUSThello::interface;
 
 
 
 fn main() {
 
     // Create a new game and two human opponents
-    
+
     let (mut light, mut dark) = interface::start_game();
 
     let mut game = game::Game::new();
@@ -26,7 +26,7 @@ fn main() {
 
         // Depending on the status of the game, proceed with the next turn or declare the winner
         match game.get_status() {
-            
+
             // If the game is running, get the coordinates of the new move from the next player
             game::Status::Running { next_player } => {
 

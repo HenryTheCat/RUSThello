@@ -10,7 +10,7 @@ pub mod human;
 pub fn start_game() -> (opponents::Opponent, opponents::Opponent) {
 
     // Print a start message
-    println!("\n\n\n\t         RUSTello!");
+    println!("\n\n\n\t         RUSThello");
     println!("\t           =====");
     println!("\t   a simple Reversi game");
     println!("\t written in Rust with love");
@@ -24,19 +24,19 @@ pub fn start_game() -> (opponents::Opponent, opponents::Opponent) {
 
     let light = select_opponent("Light");
     let dark = select_opponent("Dark");
-    
+
     (light, dark)
 }
 
 
 fn select_opponent(name: &str) -> opponents::Opponent {
-    
+
     print!("Select {} player: ", name);
-    
+
     loop {
-        
+
         let mut input = String::new();
-        
+
         // Read the input
         let _ = io::stdout().flush();
         io::stdin().read_line(&mut input)
@@ -47,7 +47,7 @@ fn select_opponent(name: &str) -> opponents::Opponent {
             Ok(num) => num,
             Err(_) => continue,
         };
-        
+
         match input {
             1 => return opponents::Opponent::Human,
             2 => return opponents::Opponent::AIBrute,
@@ -67,7 +67,7 @@ fn select_opponent(name: &str) -> opponents::Opponent {
 pub fn draw_board(game: &game::Game) {
 
     let board = game.get_board();
-    
+
     // Declare board_to_string and add column reference at the top
     let mut board_to_string: String = "\n\t   a  b  c  d  e  f  g  h\n".to_string();
 
@@ -129,7 +129,7 @@ pub fn draw_board(game: &game::Game) {
                 Ordering::Equal   => println!("Draw!"),
             }
         }
-    }    
+    }
 }
 
 
