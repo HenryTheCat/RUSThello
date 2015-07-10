@@ -2,12 +2,10 @@
 // v 0.2.0
 // by Enrico Ghiorzi
 
-// Import the reversi lib
-extern crate RUSThello;
-
-// Declare the modules to use
-use RUSThello::game;
-use RUSThello::interface;
+// Import modules
+pub mod game;
+pub mod interface;
+pub mod opponents;
 
 
 
