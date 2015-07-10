@@ -1,5 +1,5 @@
 [package]
-name = "RUSThello"
+name = "rusthello"
 version = "0.2.0"
 authors = ["Enrico Ghiorzi <enrico.ghiorzi@gmail.com>"]
 

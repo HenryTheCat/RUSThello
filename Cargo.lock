@@ -1,5 +1,5 @@
 [root]
-name = "RUSThello"
+name = "rusthello"
 version = "0.2.0"
 dependencies = [
  "time 0.1.30 (registry+https://github.com/rust-lang/crates.io-index)",
