@@ -21,7 +21,7 @@ pub fn make_move(game: &game::Game) -> (usize, usize) {
     let mut start_time = time::precise_time_s();
     let mut end_time;
     let mut depth = STARTING_DEPTH;
-    
+
     let mut best_move: (usize, usize)  = find_best_move(game, depth);
 
     end_time = time::precise_time_s();
@@ -34,7 +34,7 @@ pub fn make_move(game: &game::Game) -> (usize, usize) {
     }
 
     best_move
-        
+
 }
 
 
@@ -44,18 +44,18 @@ fn find_best_move(game: &game::Game, depth: u8) -> (usize, usize) {
     if let game::Status::Running { next_player } = game.get_status() {
 
         if depth > 0 {
-            
+
             let mut best_move: (usize, usize) = (game::BOARD_SIZE, game::BOARD_SIZE);
             let mut best_score: i16;
             let mut moves_num: u8 = 0;
-            
+
             match next_player {
                 game::Player::Light => best_score = LIGHT_STARTING_SCORE,
                 game::Player::Dark  => best_score = DARK_STARTING_SCORE,
             }
 
             let (tx, rx): (Sender<((usize, usize), i16)>, Receiver<((usize, usize), i16)>) = mpsc::channel();
-            
+
             for row in 0..game::BOARD_SIZE {
                 for col in 0..game::BOARD_SIZE {
 
@@ -64,17 +64,17 @@ fn find_best_move(game: &game::Game, depth: u8) -> (usize, usize) {
 
                         let thread_tx = tx.clone();
                         let mut game = game.clone();
-                        
+
                         thread::spawn(move || {
-                            
+
                             let current_score = eval(game.make_move((row, col)), depth - 1);
-                            
+
                             thread_tx.send(((row, col), current_score)).unwrap();
                         });
                     }
                 }
             }
-            
+
             for _ in 0..moves_num {
                 let (current_move, current_score) = rx.recv().ok().expect("Could not receive answer");
 
@@ -93,13 +93,13 @@ fn find_best_move(game: &game::Game, depth: u8) -> (usize, usize) {
                     }
                 }
             }
-            
+
             return best_move;
-            
+
         } else {
             panic!("Depth cannot be zero");
         }
-        
+
     } else {
         panic!{"Game ended, cannot make a move!"};
     }
@@ -139,7 +139,7 @@ fn eval(game: &game::Game, depth: u8) -> i16 {
                                     }
                                 }
                             }
-                            
+
                         }
                     }
                 }
@@ -198,41 +198,41 @@ fn heavy_eval(game: &game::Game) -> i16 {
     for special_cells in SIDES.iter() {
 
         let (corner, odd, odd_corner, even, even_corner, counter_odd, counter_even) = *special_cells;
-        
+
         if let game::Cell::Taken { player } = game.get_cell(corner) {
             match player {
                 game::Player::Light => {
                     score += CORNER_BONUS;
-                    if game.get_cell(odd) == ( game::Cell::Taken { player: game::Player::Light } ) {
+                    if let game::Cell::Taken { player: game::Player::Light } = game.get_cell(odd) {
                         score += FIXED_BONUS;
-                        if game.get_cell(even) == ( game::Cell::Taken { player: game::Player::Light } ) {
+                        if let game::Cell::Taken { player: game::Player::Light } = game.get_cell(even) {
                             score += FIXED_BONUS;
                         }
                     }
-                    if game.get_cell(counter_odd) == ( game::Cell::Taken { player: game::Player::Light } ) {
+                    if let game::Cell::Taken { player: game::Player::Light } = game.get_cell(counter_odd) {
                         score += FIXED_BONUS;
-                        if game.get_cell(counter_even) == ( game::Cell::Taken { player: game::Player::Light } ) {
+                        if let game::Cell::Taken { player: game::Player::Light } = game.get_cell(counter_even) {
                             score += FIXED_BONUS;
                         }
                     }
                 }
                 game::Player::Dark => {
                     score -= CORNER_BONUS;
-                    if game.get_cell(odd) == ( game::Cell::Taken { player: game::Player::Dark } ) {
+                    if let game::Cell::Taken { player: game::Player::Dark } = game.get_cell(odd) {
                         score -= FIXED_BONUS;
-                        if game.get_cell(even) == ( game::Cell::Taken { player: game::Player::Dark } ) {
+                        if let game::Cell::Taken { player: game::Player::Dark } = game.get_cell(even) {
                                     score -= FIXED_BONUS;
                         }
                     }
-                    if game.get_cell(counter_odd) == ( game::Cell::Taken { player: game::Player::Dark } ) {
+                    if let game::Cell::Taken { player: game::Player::Dark } = game.get_cell(counter_odd) {
                         score -= FIXED_BONUS;
-                        if game.get_cell(counter_even) == ( game::Cell::Taken { player: game::Player::Dark } ) {
+                        if let game::Cell::Taken { player: game::Player::Dark } = game.get_cell(counter_even) {
                                     score -= FIXED_BONUS;
                         }
                     }
                 }
             }
-            
+
         } else {
 
             if let game::Cell::Taken { player } = game.get_cell(odd) {
@@ -246,7 +246,7 @@ fn heavy_eval(game: &game::Game) -> i16 {
                     game::Player::Dark  => score -= EVEN_BONUS,
                 }
             }
-            
+
             if let game::Cell::Taken { player } = game.get_cell(counter_odd) {
                 match player {
                     game::Player::Light => score -= ODD_MALUS,
@@ -258,7 +258,7 @@ fn heavy_eval(game: &game::Game) -> i16 {
                     game::Player::Dark  => score -= EVEN_BONUS,
                 }
             }
-       
+
             if let game::Cell::Taken { player } = game.get_cell(odd_corner) {
                 match player {
                     game::Player::Light => score -= ODD_CORNER_MALUS,
