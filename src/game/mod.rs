@@ -22,7 +22,7 @@ impl Player {
 }
 
 /// A game can be in two status: either running (with a next player to play) or ended.
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub enum Status {
     Running { next_player: Player },
     Ended,
@@ -55,7 +55,7 @@ const DIRECTION: [(i8, i8); DIRECTIONS] = [
 pub const BOARD_SIZE: usize = 8;
 
 /// The board is given by a matrix of cells of size BOARD_SIZE and by which player has to move next.
-#[derive(Clone, Copy)]
+#[derive(Clone)]
 pub struct Game {
     board: [[Cell; BOARD_SIZE]; BOARD_SIZE],
     status: Status,
@@ -69,6 +69,7 @@ impl Game {
         board[4][4] = Cell::Taken { player: Player::Light };
         board[3][4] = Cell::Taken { player: Player::Dark };
         board[4][3] = Cell::Taken { player: Player::Dark };
+
         Game {
             board: board,
             status: Status::Running { next_player: Player::Dark },
@@ -82,7 +83,7 @@ impl Game {
 
     /// Return the game's status
     pub fn get_status(&self) -> Status {
-        self.status
+        self.status.clone()
     }
 
     /// Check that a given move is legal
