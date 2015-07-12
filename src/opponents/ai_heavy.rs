@@ -99,7 +99,7 @@ fn find_best_move(game: &game::Game, depth: u8) -> (usize, usize) {
                                 best_end_move = current_move;
                             }
                         } else {
-                            if current_score > best_score {
+                            if current_score + RANDOMNESS > best_score {
                                 best_score = current_score;
                                 best_move = current_move;
                                 end_game = false;
@@ -113,7 +113,7 @@ fn find_best_move(game: &game::Game, depth: u8) -> (usize, usize) {
                                 best_end_move = current_move;
                             }
                         } else {
-                            if current_score < best_score {
+                            if current_score - RANDOMNESS < best_score {
                                 best_score = current_score;
                                 best_move = current_move;
                                 end_game = false;
