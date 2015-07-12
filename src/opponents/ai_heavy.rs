@@ -9,12 +9,18 @@ use game;
 const BOARD_AREA: u8 = 64;
 
 const STARTING_DEPTH: u8 = 5;
-const TIME_LIMIT: f64 = 0.5;
+const TIME_LIMIT: f64 = 1.0;
 
 const LIGHT_STARTING_SCORE: i16 = -10_000;
 const DARK_STARTING_SCORE:  i16 =  10_000;
 
-const RANDOMNESS: i16 = 1;
+const RANDOMNESS: i16 = 3;
+
+const BONUS_TURN: i16 = 3;
+
+const MOBILITY: i16 = 1;
+
+
 
 pub fn make_move(game: &game::Game) -> (usize, usize) {
 
@@ -34,7 +40,6 @@ pub fn make_move(game: &game::Game) -> (usize, usize) {
     }
 
     best_move
-
 }
 
 
@@ -47,54 +52,93 @@ fn find_best_move(game: &game::Game, depth: u8) -> (usize, usize) {
 
             let mut best_move: (usize, usize) = (game::BOARD_SIZE, game::BOARD_SIZE);
             let mut best_score: i16;
-            let mut moves_num: u8 = 0;
+
+            let mut best_end_move: (usize, usize) = (game::BOARD_SIZE, game::BOARD_SIZE);
+            let mut best_end_score: i16;
+
+            let mut num_moves: u8 = 0;
+            let mut end_game: bool = true;
 
             match next_player {
-                game::Player::Light => best_score = LIGHT_STARTING_SCORE,
-                game::Player::Dark  => best_score = DARK_STARTING_SCORE,
+                game::Player::Light => {
+                    best_score = LIGHT_STARTING_SCORE;
+                    best_end_score = LIGHT_STARTING_SCORE;
+                }
+                game::Player::Dark  => {
+                    best_score = DARK_STARTING_SCORE;
+                    best_end_score = DARK_STARTING_SCORE;
+                }
             }
 
-            let (tx, rx): (Sender<((usize, usize), i16)>, Receiver<((usize, usize), i16)>) = mpsc::channel();
+            let (tx, rx): (Sender<((usize, usize), (i16, bool))>, Receiver<((usize, usize), (i16, bool))>) = mpsc::channel();
 
             for row in 0..game::BOARD_SIZE {
                 for col in 0..game::BOARD_SIZE {
 
                     if game.check_move((row, col)) {
-                        moves_num +=1;
+                        num_moves +=1;
 
                         let thread_tx = tx.clone();
                         let mut game = game.clone();
 
                         thread::spawn(move || {
-
-                            let current_score = eval(game.make_move((row, col)), depth - 1);
-
-                            thread_tx.send(((row, col), current_score)).unwrap();
+                            thread_tx.send(( (row, col), eval(game.make_move((row, col)), depth - 1) )).unwrap();
                         });
                     }
                 }
             }
 
-            for _ in 0..moves_num {
-                let (current_move, current_score) = rx.recv().ok().expect("Could not receive answer");
+            for _ in 0..num_moves {
+                let (current_move, (current_score, current_end_game)) = rx.recv().ok().expect("Could not receive answer");
 
                 match next_player {
                     game::Player::Light => {
-                        if current_score + RANDOMNESS > best_score {
-                            best_move = current_move;
-                            best_score = current_score;
+                        if current_end_game {
+                            if current_score > best_end_score {
+                                best_end_score = current_score;
+                                best_end_move = current_move;
+                            }
+                        } else {
+                            if current_score > best_score {
+                                best_score = current_score;
+                                best_move = current_move;
+                                end_game = false;
+                            }
                         }
                     }
                     game::Player::Dark  => {
-                        if current_score - RANDOMNESS < best_score {
-                            best_move = current_move;
-                            best_score = current_score;
+                        if current_end_game {
+                            if current_score < best_end_score {
+                                best_end_score = current_score;
+                                best_end_move = current_move;
+                            }
+                        } else {
+                            if current_score < best_score {
+                                best_score = current_score;
+                                best_move = current_move;
+                                end_game = false;
+                            }
                         }
                     }
                 }
             }
 
-            return best_move;
+            match next_player {
+                game::Player::Light  => {
+                    if best_end_score > 0 || (best_end_score == 0 && best_score < 0) || end_game {
+                        return best_end_move;
+                    } else {
+                        return best_move;
+                    }
+                }
+                game::Player::Dark  => {
+                    if best_end_score < 0 || (best_end_score == 0 && best_score > 0) || end_game {
+                        return best_end_move;
+                    } else {
+                        return best_move;
+                    }
+                }
+            }
 
         } else {
             panic!("Depth cannot be zero");
@@ -106,69 +150,98 @@ fn find_best_move(game: &game::Game, depth: u8) -> (usize, usize) {
 }
 
 
-fn eval(game: &game::Game, depth: u8) -> i16 {
 
-    if depth == 0 {
-        return basic_eval(game);
-    } else {
-        match game.get_status() {
-            game::Status::Ended => return basic_eval(game),
-            game::Status::Running { next_player } => {
-
-                let mut best_score: i16;
-                match next_player {
-                    game::Player::Light => best_score = LIGHT_STARTING_SCORE,
-                    game::Player::Dark  => best_score = DARK_STARTING_SCORE,
-                }
-
-                for row in 0..game::BOARD_SIZE {
-                    for col in 0..game::BOARD_SIZE {
-                        if game.check_move((row, col)) {
-
-                            let current_score = eval(game.clone().make_move((row, col)), depth - 1);
-
-                            match next_player {
-                                game::Player::Light => {
-                                    if current_score > best_score {
-                                        best_score = current_score;
-                                    }
-                                }
-                                game::Player::Dark  => {
-                                    if current_score < best_score {
-                                        best_score = current_score;
-                                    }
-                                }
-                            }
-
-                        }
-                    }
-                }
-
-                return best_score;
-
-            }
-        }
-    }
-}
-
-
-
-fn basic_eval (game: &game::Game) -> i16 {
-
-    const BONUS_TURN: i16 = 1;
+fn eval(game: &game::Game, depth: u8) -> (i16, bool) {
 
     match game.get_status() {
-        game::Status::Running {next_player} => {
-            let score: i16 = heavy_eval(game);
-            match next_player {
-                game::Player::Light => return score + BONUS_TURN,
-                game::Player::Dark  => return score - BONUS_TURN,
-            }
-        }
         game::Status::Ended => {
             let (score_light, score_dark) = game.get_score();
             let score: i16 = (score_light as i16) - (score_dark as i16);
-            return score * 64;
+            return (score, true);
+        }
+        game::Status::Running { next_player } => {
+            if depth == 0 {
+                match next_player {
+                    game::Player::Light => return (heavy_eval(game) + BONUS_TURN, false),
+                    game::Player::Dark  => return (heavy_eval(game) - BONUS_TURN, false),
+                }
+            } else {
+                let mut end_game: bool = true;
+                let mut num_moves: i16 = 0;
+                let mut best_end_score: i16;
+                let mut best_score: i16;
+
+                match next_player {
+
+                    game::Player::Light => {
+                        best_score = LIGHT_STARTING_SCORE;
+                        best_end_score = LIGHT_STARTING_SCORE;
+
+                        for row in 0..game::BOARD_SIZE {
+                            for col in 0..game::BOARD_SIZE {
+                                if game.check_move((row, col)) {
+
+                                    let (current_score, current_end_game) = eval(game.clone().make_move((row, col)), depth - 1);
+
+                                    if current_end_game {
+                                        if current_score > best_end_score {
+                                            best_end_score = current_score;
+                                        }
+                                    } else {
+                                        num_moves += 1;
+                                        if current_score > best_score {
+                                            best_score = current_score;
+                                            end_game = false;
+                                        }
+                                    }
+
+                                }
+                            }
+                        }
+
+                        if best_end_score > 0 || (best_end_score == 0 && best_score < 0) || end_game {
+                            return (best_end_score, true);
+                        } else {
+                            return (best_score + MOBILITY*num_moves, false);
+                        }
+                    }
+
+                    game::Player::Dark  => {
+                        best_score = DARK_STARTING_SCORE;
+                        best_end_score = DARK_STARTING_SCORE;
+
+                        for row in 0..game::BOARD_SIZE {
+                            for col in 0..game::BOARD_SIZE {
+                                if game.check_move((row, col)) {
+
+                                    let (current_score, current_end_game) = eval(game.clone().make_move((row, col)), depth - 1);
+
+                                    if current_end_game {
+                                        if current_score < best_end_score {
+                                            best_end_score = current_score;
+                                        }
+                                    } else {
+                                        num_moves += 1;
+                                        if current_score < best_score {
+                                            best_score = current_score;
+                                            end_game = false;
+                                        }
+                                    }
+
+                                }
+                            }
+                        }
+
+                        if best_end_score < 0 || (best_end_score == 0 && best_score > 0) || end_game {
+                            return (best_end_score, true);
+                        } else {
+                            return (best_score - MOBILITY*num_moves, false);
+                        }
+                    }
+
+                }
+
+            }
         }
     }
 }
@@ -176,7 +249,6 @@ fn basic_eval (game: &game::Game) -> i16 {
 
 
 fn heavy_eval(game: &game::Game) -> i16 {
-
     const CORNER_BONUS: i16 = 12;
     const ODD_MALUS: i16 = 5;
     const EVEN_BONUS: i16 = 3;
@@ -184,16 +256,16 @@ fn heavy_eval(game: &game::Game) -> i16 {
     const EVEN_CORNER_BONUS: i16 = 5;
     const FIXED_BONUS: i16 = 2;
 
-    let (score_light, score_dark) = game.get_score();
-    let mut score: i16 = (score_light as i16) - (score_dark as i16);
-
-
     const SIDES: [( (usize, usize), (usize, usize), (usize, usize), (usize, usize), (usize, usize), (usize, usize), (usize, usize) ); 4] = [
         ( (0,0), (0,1), (1,1), (0,2), (2,2), (1,0), (2,0) ), // NW corner
         ( (0,7), (1,7), (1,6), (2,7), (2,5), (0,6), (0,5) ), // NE corner
         ( (7,0), (6,0), (6,1), (5,0), (5,2), (7,1), (7,2) ), // SW corner
         ( (7,7), (6,7), (6,6), (5,7), (5,5), (7,6), (7,6) ), // SE corner
         ];
+
+
+    let (score_light, score_dark) = game.get_score();
+    let mut score: i16 = (score_light as i16) - (score_dark as i16);
 
     for special_cells in SIDES.iter() {
 
@@ -221,13 +293,13 @@ fn heavy_eval(game: &game::Game) -> i16 {
                     if let game::Cell::Taken { player: game::Player::Dark } = game.get_cell(odd) {
                         score -= FIXED_BONUS;
                         if let game::Cell::Taken { player: game::Player::Dark } = game.get_cell(even) {
-                                    score -= FIXED_BONUS;
+                            score -= FIXED_BONUS;
                         }
                     }
                     if let game::Cell::Taken { player: game::Player::Dark } = game.get_cell(counter_odd) {
                         score -= FIXED_BONUS;
                         if let game::Cell::Taken { player: game::Player::Dark } = game.get_cell(counter_even) {
-                                    score -= FIXED_BONUS;
+                            score -= FIXED_BONUS;
                         }
                     }
                 }
