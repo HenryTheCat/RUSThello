@@ -255,6 +255,24 @@ impl Game {
         (score_light, score_dark)
     }
 
+    // Return the difference in score between Light and Dark, in a time-efficient way
+    pub fn get_score_diff(&self) -> i16 {
+        let mut score: i16 = 0;
+
+        for row in 0..BOARD_SIZE {
+            for col in 0..BOARD_SIZE {
+                match self.board[row][col] {
+                    Cell::Taken { player: Player::Light } => score += 1,
+                    Cell::Taken { player: Player::Dark } => score -= 1,
+                    _ => {},
+                }
+            }
+        }
+
+        score
+    }
+
+
     pub fn get_turn(&self) -> u8 {
         let mut turn: u8 = 0;
 
