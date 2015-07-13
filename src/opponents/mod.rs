@@ -1,9 +1,10 @@
 use game;
 use interface;
 
-mod ai_brute;
-mod ai_brute_mt;
-mod ai_heavy;
+pub mod ai_heavy;
+//mod ai_brute;
+//mod ai_brute_mt;
+//mod ai_mean;
 
 
 
@@ -11,21 +12,28 @@ mod ai_heavy;
 //#[derive(Clone)]
 pub enum Opponent {
     Human,
-    AIBrute,
-    AIBruteMT,
-    AIHeavy,
+    //AIBrute,
+    //AIBruteMT,
+    AIHeavy { opponent: ai_heavy::AIHeavy },
+    //AIMean,
 }
 
 
 
 impl Opponent {
-        
+
     /// make_move matches each kind of Opponent with its make_move method
     pub fn make_move(&mut self, game: &game::Game) -> (usize, usize) {
         match *self {
             Opponent::Human => {
                 return interface::human::make_move(game);
             }
+            Opponent::AIHeavy { ref mut opponent } => {
+                let ai_move = opponent.make_move(game);
+                interface::print_move(game, ai_move);
+                return ai_move;
+            }
+            /*
             Opponent::AIBrute => {
                 let ai_move = ai_brute::make_move(game);
                 interface::print_move(game, ai_move);
@@ -36,12 +44,12 @@ impl Opponent {
                 interface::print_move(game, ai_move);
                 return ai_move;
             }
-            Opponent::AIHeavy => {
-                let ai_move = ai_heavy::make_move(game);
+            Opponent::AIMean => {
+                let ai_move = ai_mean::make_move(game);
                 interface::print_move(game, ai_move);
                 return ai_move;
             }
+            */
         }
     }
 }
-

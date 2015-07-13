@@ -14,13 +14,15 @@ pub fn start_game() -> (opponents::Opponent, opponents::Opponent) {
     println!("\t           =====");
     println!("\t   a simple Reversi game");
     println!("\t written in Rust with love");
-    println!("\t          v 0.2.0");
+    println!("\t          v 0.2.1");
 
     println!("Players:");
     println!("1) Human");
-    println!("2) AI - Brute (Single Thread)");
-    println!("3) AI - Brute (Multi Thread)");
-    println!("4) AI - Heavy Brute");
+    println!("2) AI");
+    //println!("2) AI - Brute (Single Thread)");
+    //println!("3) AI - Brute (Multi Thread)");
+    //println!("4) AI - Heavy Brute");
+    //println!("5) AI - Heavy Mean Brute");
 
     let light = select_opponent("Light");
     let dark = select_opponent("Dark");
@@ -50,9 +52,11 @@ fn select_opponent(name: &str) -> opponents::Opponent {
 
         match input {
             1 => return opponents::Opponent::Human,
-            2 => return opponents::Opponent::AIBrute,
-            3 => return opponents::Opponent::AIBruteMT,
-            4 => return opponents::Opponent::AIHeavy,
+            2 => return opponents::Opponent::AIHeavy { opponent: opponents::ai_heavy::AIHeavy::new() },
+            //2 => return opponents::Opponent::AIBrute,
+            //3 => return opponents::Opponent::AIBruteMT,
+            //4 => return opponents::Opponent::AIHeavy { opponent: opponents::ai_heavy::AIHeavy::new() },
+            //5 => return opponents::Opponent::AIMean,
             _ => {
                 println!("Invalid input. Try again");
                 continue;
