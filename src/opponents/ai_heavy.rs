@@ -14,7 +14,7 @@ const TIME_LIMIT: f64 = 1.0;
 const LIGHT_STARTING_SCORE: i16 = -10_000;
 const DARK_STARTING_SCORE:  i16 =  10_000;
 
-const RANDOMNESS: i16 = 3;
+const RANDOMNESS: i16 = 1;
 
 const BONUS_TURN: i16 = 3;
 
@@ -154,11 +154,7 @@ fn find_best_move(game: &game::Game, depth: u8) -> (usize, usize) {
 fn eval(game: &game::Game, depth: u8) -> (i16, bool) {
 
     match game.get_status() {
-        game::Status::Ended => {
-            let (score_light, score_dark) = game.get_score();
-            let score: i16 = (score_light as i16) - (score_dark as i16);
-            return (score, true);
-        }
+        game::Status::Ended => return (game.get_score_diff(), true),
         game::Status::Running { next_player } => {
             if depth == 0 {
                 match next_player {
@@ -249,12 +245,12 @@ fn eval(game: &game::Game, depth: u8) -> (i16, bool) {
 
 
 fn heavy_eval(game: &game::Game) -> i16 {
-    const CORNER_BONUS: i16 = 12;
-    const ODD_MALUS: i16 = 5;
+    const CORNER_BONUS: i16 = 15;
+    const ODD_MALUS: i16 = 3;
     const EVEN_BONUS: i16 = 3;
-    const ODD_CORNER_MALUS: i16 = 8;
+    const ODD_CORNER_MALUS: i16 = 10;
     const EVEN_CORNER_BONUS: i16 = 5;
-    const FIXED_BONUS: i16 = 2;
+    const FIXED_BONUS: i16 = 3;
 
     const SIDES: [( (usize, usize), (usize, usize), (usize, usize), (usize, usize), (usize, usize), (usize, usize), (usize, usize) ); 4] = [
         ( (0,0), (0,1), (1,1), (0,2), (2,2), (1,0), (2,0) ), // NW corner
@@ -264,8 +260,8 @@ fn heavy_eval(game: &game::Game) -> i16 {
         ];
 
 
-    let (score_light, score_dark) = game.get_score();
-    let mut score: i16 = (score_light as i16) - (score_dark as i16);
+    //let (score_light, score_dark) = game.get_score();
+    let mut score: i16 = 0; // (score_light as i16) - (score_dark as i16);
 
     for special_cells in SIDES.iter() {
 
