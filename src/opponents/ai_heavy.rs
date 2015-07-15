@@ -9,8 +9,8 @@ use game;
 const BOARD_AREA: u8 = 64;
 
 const STARTING_DEPTH: u8 = 6;
-const ENDING_SPRINT: u8 = 5;
-const TIME_LIMIT: f64 = 3.0;
+const ENDING_SPRINT: u8 = 6;
+const TIME_LIMIT: f64 = 2.0;
 
 const LIGHT_STARTING_SCORE: i16 = -10_000;
 const DARK_STARTING_SCORE:  i16 =  10_000;
@@ -171,7 +171,7 @@ impl AIHeavy {
 
     fn eval(game: &game::Game, depth: u8) -> (i16, bool) {
 
-        return match game.get_status() {
+        match game.get_status() {
             game::Status::Ended => (game.get_score_diff(), true),
             game::Status::Running { next_player } => {
                 if depth == 0 {
@@ -180,16 +180,14 @@ impl AIHeavy {
                         game::Player::Dark  => (AIHeavy::heavy_eval(game) - BONUS_TURN, false),
                     }
                 } else {
-                    let mut end_game: bool = true;
-                    let mut num_moves: i16 = 0;
-                    let mut best_end_score: i16;
-                    let mut best_score: i16;
 
-                    return match next_player {
+                    match next_player {
 
                         game::Player::Light => {
-                            best_score = LIGHT_STARTING_SCORE;
-                            best_end_score = LIGHT_STARTING_SCORE;
+                            let mut end_game: bool = true;
+                            let mut num_moves: i16 = 0;
+                            let mut best_score = LIGHT_STARTING_SCORE;
+                            let mut best_end_score: i16 = LIGHT_STARTING_SCORE;
 
                             for row in 0..game::BOARD_SIZE {
                                 for col in 0..game::BOARD_SIZE {
@@ -197,15 +195,13 @@ impl AIHeavy {
 
                                         let (current_score, current_end_game) = AIHeavy::eval(game.clone().make_move((row, col)), depth - 1);
 
-                                        if current_end_game {
-                                            if current_score > best_end_score {
-                                                best_end_score = current_score;
-                                            }
+                                        if current_end_game && current_score > best_end_score {
+                                            best_end_score = current_score;
                                         } else {
                                             num_moves += 1;
+                                            end_game = false;
                                             if current_score > best_score {
                                                 best_score = current_score;
-                                                end_game = false;
                                             }
                                         }
 
@@ -213,7 +209,7 @@ impl AIHeavy {
                                 }
                             }
 
-                            if best_end_score > 0 || (best_end_score == 0 && best_score < 0) || end_game {
+                            if end_game || best_end_score > 0 || (best_end_score == 0 && best_score < 0) {
                                 (best_end_score, true)
                             } else {
                                 (best_score + MOBILITY*num_moves, false)
@@ -221,8 +217,10 @@ impl AIHeavy {
                         }
 
                         game::Player::Dark  => {
-                            best_score = DARK_STARTING_SCORE;
-                            best_end_score = DARK_STARTING_SCORE;
+                            let mut end_game: bool = true;
+                            let mut num_moves: i16 = 0;
+                            let mut best_score = DARK_STARTING_SCORE;
+                            let mut best_end_score: i16 = DARK_STARTING_SCORE;
 
                             for row in 0..game::BOARD_SIZE {
                                 for col in 0..game::BOARD_SIZE {
@@ -230,15 +228,13 @@ impl AIHeavy {
 
                                         let (current_score, current_end_game) = AIHeavy::eval(game.clone().make_move((row, col)), depth - 1);
 
-                                        if current_end_game {
-                                            if current_score < best_end_score {
-                                                best_end_score = current_score;
-                                            }
+                                        if current_end_game && current_score < best_end_score {
+                                            best_end_score = current_score;
                                         } else {
+                                            end_game = false;
                                             num_moves += 1;
                                             if current_score < best_score {
                                                 best_score = current_score;
-                                                end_game = false;
                                             }
                                         }
 
@@ -246,7 +242,7 @@ impl AIHeavy {
                                 }
                             }
 
-                            if best_end_score < 0 || (best_end_score == 0 && best_score > 0) || end_game {
+                            if end_game || best_end_score < 0 || (best_end_score == 0 && best_score > 0) {
                                 (best_end_score, true)
                             } else {
                                 (best_score - MOBILITY*num_moves, false)
@@ -279,11 +275,9 @@ impl AIHeavy {
 
 
         //let (score_light, score_dark) = game.get_score();
-        let mut score: i16 = 0; // (score_light as i16) - (score_dark as i16);
+        let mut score: i16 = ( game.get_score_diff() * FIXED_BONUS * game.get_turn() as i16 ) / 64; // (score_light as i16) - (score_dark as i16);
 
-        for special_cells in SIDES.iter() {
-
-            let (corner, odd, odd_corner, even, even_corner, counter_odd, counter_even) = *special_cells;
+        for &(corner, odd, odd_corner, even, even_corner, counter_odd, counter_even) in SIDES.iter() {
 
             if let game::Cell::Taken { player } = game.get_cell(corner) {
                 match player {
