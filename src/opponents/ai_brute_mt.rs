@@ -11,7 +11,7 @@ use game;
 const BOARD_AREA: u8 = 64; // Mysterious casting error //( game::BOARD_SIZE*game::BOARD_SIZE);
 
 const MINIMUM_DEPTH: u8 = 5;
-const TIME_LIMIT: f64 = 1.0;
+const TIME_LIMIT: f64 = 0.5;
 
 const LIGHT_STARTING_SCORE: i16 = -10_000;
 const DARK_STARTING_SCORE:  i16 =  10_000;

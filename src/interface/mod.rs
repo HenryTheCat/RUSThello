@@ -76,14 +76,13 @@ pub fn draw_board(game: &game::Game) {
     let mut board_to_string: String = "\n\t   a  b  c  d  e  f  g  h\n".to_string();
 
     // For every row add a row reference to the left
-    for row in 0..game::BOARD_SIZE {
-
+    for (row, row_array) in board.iter().enumerate() {
         board_to_string = board_to_string + "\t" + &((row + 1).to_string()) + " ";
 
         // For every column, add the appropriate character depending on the content of the current cell
-        for col in 0..game::BOARD_SIZE {
-            match board[row][col] {
+        for (col, cell) in row_array.iter().enumerate() {
 
+            match *cell {
                 // Light and Dark cells are represented by white and black bullets
                 game::Cell::Taken { player: game::Player::Light } => board_to_string = board_to_string + " ○ ",
                 game::Cell::Taken { player: game::Player::Dark }  => board_to_string = board_to_string + " ● ",

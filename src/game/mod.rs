@@ -97,8 +97,8 @@ impl Game {
         }
 
         // If a move leads to eat in at least one direction, then it is legal
-        for dir in 0..DIRECTIONS {
-            if self.check_move_along_direction((row, col),  dir) {
+        for dir in DIRECTION.iter() {
+            if self.check_move_along_direction((row, col), *dir) {
                 return true;
             }
         }
@@ -109,12 +109,11 @@ impl Game {
 
 
     // Check whether a move leads to eat in a specified direction
-    fn check_move_along_direction (&self, (row, col): (usize, usize), dir: usize) -> bool {
-
-        let (delta_ns, delta_ew) = DIRECTION[dir];
+    // Does NOT perform checks already performed by check_move!
+    //#[inline]
+    fn check_move_along_direction (&self, (row, col): (usize, usize), (delta_ns, delta_ew): (i8, i8)) -> bool {
 
         // Need at least two cells' space in the given direction
-
         let mut col_i8: i8 = col as i8 + 2*delta_ew;
         if ( col_i8 < 0 ) || ( col_i8 >= BOARD_SIZE as i8 ) {
                 return false;
@@ -159,11 +158,9 @@ impl Game {
     // Eats all of the opponent's occupied cells from a specified cell (given by its coordinates) in a specified direction
     // until it finds a cell of the current player
     // WARNING: this function do NOT perform any check about whether or not the move is legal
-    fn eat_along_direction (&mut self, (row, col): (usize, usize), dir: usize) {
+    fn eat_along_direction (&mut self, (row, col): (usize, usize), (delta_ns, delta_ew): (i8, i8)) {
 
         if let Status::Running { next_player } = self.status {
-
-            let (delta_ns, delta_ew) = DIRECTION[dir];
 
             self.board[ ( row as i8 + delta_ns ) as usize ][ ( col as i8 + delta_ew ) as usize] = Cell::Taken { player: next_player };
 
@@ -193,10 +190,12 @@ impl Game {
 
         let mut legal: bool = false;
 
-        for dir in 0..DIRECTIONS {
-            if self.check_move_along_direction((row, col),  dir) {
-                self.eat_along_direction((row, col), dir);
-                legal = true;
+        for dir in DIRECTION.iter() {
+            if self.check_move_along_direction((row, col), *dir) {
+                self.eat_along_direction((row, col), *dir);
+                if !legal {
+                    legal = true;
+                }
             }
         }
 
@@ -228,23 +227,25 @@ impl Game {
 
     // Return whether or not next_player can make any move at all
     fn can_move(&self) -> bool {
-        for row in 0..BOARD_SIZE {
-            for col in 0..BOARD_SIZE {
-                if self.check_move((row, col)) {
+
+        for (row_n, row) in self.board.iter().enumerate() {
+            for (col_n, _cell) in row.iter().enumerate() {
+               if self.check_move((row_n, col_n)) {
                     return true;
                 }
             }
         }
         false
+
     }
 
     // Return the current score of the match
     pub fn get_score(&self) -> (u8, u8) {
         let (mut score_light, mut score_dark): (u8, u8) = (0, 0);
 
-        for row in 0..BOARD_SIZE {
-            for col in 0..BOARD_SIZE {
-                match self.board[row][col] {
+        for row in self.board.iter() {
+            for cell in row.iter() {
+                match *cell {
                     Cell::Taken { player: Player::Light } => score_light += 1,
                     Cell::Taken { player: Player::Dark } => score_dark += 1,
                     _ => {},
@@ -259,9 +260,9 @@ impl Game {
     pub fn get_score_diff(&self) -> i16 {
         let mut score: i16 = 0;
 
-        for row in 0..BOARD_SIZE {
-            for col in 0..BOARD_SIZE {
-                match self.board[row][col] {
+        for row in self.board.iter() {
+            for cell in row.iter() {
+                match *cell {
                     Cell::Taken { player: Player::Light } => score += 1,
                     Cell::Taken { player: Player::Dark } => score -= 1,
                     _ => {},
@@ -276,9 +277,9 @@ impl Game {
     pub fn get_turn(&self) -> u8 {
         let mut turn: u8 = 0;
 
-        for row in 0..BOARD_SIZE {
-            for col in 0..BOARD_SIZE {
-                if let Cell::Taken { player: _ } =  self.board[row][col] {
+        for row in self.board.iter() {
+            for cell in row.iter() {
+                if let Cell::Taken { player: _ } =  *cell {
                     turn += 1;
                 }
             }
@@ -287,7 +288,7 @@ impl Game {
     }
 
     pub fn get_cell(&self, (row, col): (usize, usize)) -> Cell {
-        return self.board[row][col];
+        self.board[row][col]
     }
 
 }
