@@ -59,6 +59,8 @@ pub const BOARD_SIZE: usize = 8;
 pub struct Game {
     board: [[Cell; BOARD_SIZE]; BOARD_SIZE],
     status: Status,
+    score_light: u8,
+    score_dark: u8,
 }
 
 impl Game {
@@ -73,6 +75,8 @@ impl Game {
         Game {
             board: board,
             status: Status::Running { next_player: Player::Dark },
+            score_light: 2,
+            score_dark: 2,
         }
     }
 
@@ -97,7 +101,7 @@ impl Game {
         }
 
         // If a move leads to eat in at least one direction, then it is legal
-        for dir in DIRECTION.iter() {
+        for dir in &DIRECTION {
             if self.check_move_along_direction((row, col), *dir) {
                 return true;
             }
@@ -166,6 +170,8 @@ impl Game {
 
             let (mut row_i8, mut col_i8): (i8, i8) = (row as i8 + 2*delta_ns, col as i8 + 2*delta_ew);
 
+            let mut eating: u8 = 1;
+
             while let Cell::Taken { player: player_in_cell } = self.board[ row_i8 as usize ][ col_i8 as usize] {
                 if next_player == player_in_cell {
                     break;
@@ -173,8 +179,20 @@ impl Game {
 
                 self.board[ row_i8 as usize ][ col_i8 as usize ] = Cell::Taken { player: next_player };
 
+                eating += 1;
                 row_i8 += delta_ns;
                 col_i8 += delta_ew;
+            }
+
+            match next_player {
+                Player::Light => {
+                    self.score_light += eating;
+                    self.score_dark -= eating;
+                }
+                Player::Dark => {
+                    self.score_light -= eating;
+                    self.score_dark += eating;
+                }
             }
         }
     }
@@ -190,7 +208,7 @@ impl Game {
 
         let mut legal: bool = false;
 
-        for dir in DIRECTION.iter() {
+        for dir in &DIRECTION {
             if self.check_move_along_direction((row, col), *dir) {
                 self.eat_along_direction((row, col), *dir);
                 if !legal {
@@ -206,6 +224,11 @@ impl Game {
         if legal {
             if let Status::Running { next_player } = self.status {
                 self.board[row][col] = Cell::Taken { player: next_player };
+
+                match next_player {
+                    Player::Light => self.score_light += 1,
+                    Player::Dark => self.score_dark += 1,
+                }
 
                 self.status = Status::Running { next_player: next_player.opposite() };
                 if self.can_move() {
@@ -236,57 +259,24 @@ impl Game {
             }
         }
         false
-
     }
 
     // Return the current score of the match
     pub fn get_score(&self) -> (u8, u8) {
-        let (mut score_light, mut score_dark): (u8, u8) = (0, 0);
-
-        for row in self.board.iter() {
-            for cell in row.iter() {
-                match *cell {
-                    Cell::Taken { player: Player::Light } => score_light += 1,
-                    Cell::Taken { player: Player::Dark } => score_dark += 1,
-                    _ => {},
-                }
-            }
-        }
-
-        (score_light, score_dark)
+        (self.score_light, self.score_dark)
     }
 
-    // Return the difference in score between Light and Dark, in a time-efficient way
+    // Return the difference in score between Light and Dark
     pub fn get_score_diff(&self) -> i16 {
-        let mut score: i16 = 0;
-
-        for row in self.board.iter() {
-            for cell in row.iter() {
-                match *cell {
-                    Cell::Taken { player: Player::Light } => score += 1,
-                    Cell::Taken { player: Player::Dark } => score -= 1,
-                    _ => {},
-                }
-            }
-        }
-
-        score
+        self.score_light as i16 - self.score_dark as i16
     }
 
-
+    // Return how many cells are taken on the board
     pub fn get_turn(&self) -> u8 {
-        let mut turn: u8 = 0;
-
-        for row in self.board.iter() {
-            for cell in row.iter() {
-                if let Cell::Taken { player: _ } =  *cell {
-                    turn += 1;
-                }
-            }
-        }
-        turn
+        self.score_light + self.score_dark
     }
 
+    // Return a cell given its coordinates
     pub fn get_cell(&self, (row, col): (usize, usize)) -> Cell {
         self.board[row][col]
     }
