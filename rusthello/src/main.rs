@@ -9,7 +9,6 @@ mod opponents;
 extern crate rusthello_lib;
 use rusthello_lib::game;
 
-extern crate time;
 
 
 fn main() {
@@ -19,8 +18,6 @@ fn main() {
     let (light, dark) = interface::start_game();
 
     let mut game = game::Game::new();
-
-    let start_time = time::precise_time_s();
 
     // Proceed with turn after turn till the endgame
     loop {
@@ -55,6 +52,4 @@ fn main() {
             }
         }
     }
-
-    println!("Time: {}", time::precise_time_s() - start_time);
 }
