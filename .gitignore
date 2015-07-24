@@ -1,0 +1,5 @@
+rusthello/target/*
+rusthello_lib/target/*
+ai_brute/target/*
+ai_brute_mt/target/*
+ai_heavy/target/*
