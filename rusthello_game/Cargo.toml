@@ -1,5 +1,5 @@
 [package]
-name = "rusthello"
+name = "rusthello_game"
 version = "0.3.0"
 authors = ["Enrico Ghiorzi <enrico.ghiorzi@gmail.com>"]
 
@@ -7,5 +7,5 @@ authors = ["Enrico Ghiorzi <enrico.ghiorzi@gmail.com>"]
 time = "0.1"
 
 [dependencies.rusthello_lib]
-version = "0.1"
+version = "0.2"
 path = "../rusthello_lib"
