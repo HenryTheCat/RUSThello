@@ -43,7 +43,7 @@ pub enum Cell {
 /// An array listing all the cardinal directions, represented by the coordinate delta to move in that direction.
 /// #Examples
 /// If I am in cell (4, 5) and move NE, I go to cell (4, 5) + (1, -1) = (5, 4).
-const DIRECTIONS: [(i8, i8); 8] = [
+pub const DIRECTIONS: [(i8, i8); 8] = [
     ( 0, -1), //North
     ( 1, -1), //NE
     ( 1,  0), //East
@@ -201,7 +201,7 @@ impl Game {
 
             let mut eating: u8 = 1;
 
-            while let Cell::Taken { disk } = self.board[ row_i8 as usize ][ col_i8 as usize] {
+            while let Cell::Taken { disk } = self.board[ row_i8 as usize ][ col_i8 as usize ] {
                 if current_player == disk {
                     break;
                 }
