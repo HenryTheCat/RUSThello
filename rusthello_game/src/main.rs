@@ -1,4 +1,4 @@
-//! A simple Reversi game written in Rust with love
+//! A simple Othello game written in Rust with love
 //! by Enrico Ghiorzi
 
 // Import modules

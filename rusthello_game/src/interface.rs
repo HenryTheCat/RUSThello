@@ -10,7 +10,7 @@ pub fn start_game() -> (opponents::Opponent, opponents::Opponent) {
     // Print a start message
     println!("\n\n\n\t         RUSThello");
     println!("\t           =====");
-    println!("\t   a simple Reversi game");
+    println!("\t   a simple Othello game");
     println!("\t written in Rust with love");
     println!("\t          v 0.3.0");
 
