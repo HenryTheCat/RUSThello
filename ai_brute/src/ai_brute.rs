@@ -37,13 +37,13 @@ pub fn make_move(game: &reversi::Game) -> (usize, usize) {
 
 fn find_best_move(game: &reversi::Game, depth: u8) -> (usize, usize) {
 
-    let mut best_move: (usize, usize) = (reversi::BOARD_SIZE, reversi::BOARD_SIZE);
-    let mut best_score: i16;
-
     if let reversi::Status::Running { current_player } = game.get_status() {
+
+        let mut best_move: (usize, usize) = (reversi::BOARD_SIZE, reversi::BOARD_SIZE);
+
         match current_player {
             reversi::Player::Light => {
-                best_score = LIGHT_STARTING_SCORE;
+                let mut best_score = LIGHT_STARTING_SCORE;
 
                 //for (row, row_array) in game.get_board().iter().enumerate() {
                     //for (col, _cell) in row_array.iter().enumerate() {
@@ -62,9 +62,11 @@ fn find_best_move(game: &reversi::Game, depth: u8) -> (usize, usize) {
                         }
                     }
                 }
+
+                best_move
             }
             reversi::Player::Dark => {
-                best_score = DARK_STARTING_SCORE;
+                let mut best_score = DARK_STARTING_SCORE;
 
                 //for (row, row_array) in game.get_board().iter().enumerate() {
                     //for (col, _cell) in row_array.iter().enumerate() {
@@ -83,13 +85,13 @@ fn find_best_move(game: &reversi::Game, depth: u8) -> (usize, usize) {
                         }
                     }
                 }
+
+                best_move
             }
         }
     } else {
         panic!{"Game ended, cannot make a move!"};
     }
-
-    best_move
 }
 
 
@@ -100,8 +102,8 @@ fn eval(game: &reversi::Game, depth: u8) -> i16 {
         reversi::Status::Running { current_player } => {
             if depth == 0 {
                 match current_player {
-                    reversi::Player::Light => return game.get_score_diff() + BONUS_TURN,
-                    reversi::Player::Dark  => return game.get_score_diff() - BONUS_TURN,
+                    reversi::Player::Light => game.get_score_diff() + BONUS_TURN,
+                    reversi::Player::Dark  => game.get_score_diff() - BONUS_TURN,
                 }
             } else {
                 match current_player {
@@ -122,7 +124,7 @@ fn eval(game: &reversi::Game, depth: u8) -> i16 {
                                 }
                             }
                         }
-                        return score;
+                        score
                     }
                     reversi::Player::Dark => {
                         let mut score: i16 =  DARK_STARTING_SCORE;
@@ -141,13 +143,13 @@ fn eval(game: &reversi::Game, depth: u8) -> i16 {
                                 }
                             }
                         }
-                        return score;
+                        score
                     }
                 }
             }
         }
         reversi::Status::Ended => {
-            return game.get_score_diff()*64;
+            game.get_score_diff()*64
         }
     }
 }
