@@ -15,11 +15,11 @@ const TIME_LIMIT: f64 = 1.0;
 const LIGHT_STARTING_SCORE: i16 = -10_000;
 const DARK_STARTING_SCORE:  i16 =  10_000;
 
-const RANDOMNESS: i16 = 1;
+const RANDOMNESS: i16 = 3;
 
 const BONUS_TURN: i16 = 3;
 
-const MOBILITY: i16 = 1;
+const MOBILITY: i16 = 2;
 
 enum EvalReturn {
     Ended,
@@ -63,40 +63,34 @@ fn find_best_move(game: &reversi::Game, depth: u8) -> (usize, usize) {
         if depth > 0 {
 
             let mut best_move: (usize, usize) = (reversi::BOARD_SIZE, reversi::BOARD_SIZE);
-            let mut best_score: i16;
+            let mut best_score: i16 = match current_player {
+                reversi::Player::Light => LIGHT_STARTING_SCORE,
+                reversi::Player::Dark  => DARK_STARTING_SCORE,
+            };
 
             let mut best_end_move: (usize, usize) = (reversi::BOARD_SIZE, reversi::BOARD_SIZE);
-            let mut best_end_score: i16;
+            let mut best_end_score: i16 = best_score;
 
             let mut num_moves: u8 = 0;
             let mut end_game: bool = true;
 
-            match current_player {
-                reversi::Player::Light => {
-                    best_score = LIGHT_STARTING_SCORE;
-                    best_end_score = LIGHT_STARTING_SCORE;
-                }
-                reversi::Player::Dark  => {
-                    best_score = DARK_STARTING_SCORE;
-                    best_end_score = DARK_STARTING_SCORE;
-                }
-            }
-
             let (tx, rx): (Sender<((usize, usize), (i16, EvalReturn))>, Receiver<((usize, usize), (i16, EvalReturn))>) = mpsc::channel();
 
-            let mut game_after_move;
+            let mut game_after_move = game.clone();
 
             for row in 0..reversi::BOARD_SIZE {
                 for col in 0..reversi::BOARD_SIZE {
-                    game_after_move = game.clone();
                     if game_after_move.make_move((row, col)) {
-                        num_moves +=1;
 
+                        num_moves +=1;
                         let thread_tx = tx.clone();
 
                         thread::spawn(move || {
                             thread_tx.send(( (row, col), eval(&game_after_move, depth - 1) )).unwrap();
                         });
+
+                        game_after_move = game.clone();
+
                     }
                 }
             }
@@ -171,8 +165,8 @@ fn eval(game: &reversi::Game, depth: u8) -> (i16, EvalReturn) {
         reversi::Status::Running { current_player } => {
             if depth == 0 {
                 match current_player {
-                    reversi::Player::Light => ( BONUS_TURN, EvalReturn::Running { fixed_cells_board: quick_stable_board(&game.get_board(), reversi::Player::Light) }),
-                    reversi::Player::Dark  => (-BONUS_TURN, EvalReturn::Running { fixed_cells_board: quick_stable_board(&game.get_board(), reversi::Player::Dark) }),
+                    reversi::Player::Light => (heavy_eval(&game) + BONUS_TURN, EvalReturn::Running { fixed_cells_board: quick_stable_board(&game.get_board(), reversi::Player::Light) }),
+                    reversi::Player::Dark  => (heavy_eval(&game) - BONUS_TURN, EvalReturn::Running { fixed_cells_board: quick_stable_board(&game.get_board(), reversi::Player::Dark) }),
                 }
             } else {
 
@@ -184,11 +178,10 @@ fn eval(game: &reversi::Game, depth: u8) -> (i16, EvalReturn) {
                         let mut best_score = LIGHT_STARTING_SCORE;
                         let mut best_end_score: i16 = LIGHT_STARTING_SCORE;
                         let mut fixed_cells_boards: Vec<reversi::Board> = Vec::new();
-                        let mut game_after_move;
+                        let mut game_after_move = game.clone();
 
                         for row in 0..reversi::BOARD_SIZE {
                             for col in 0..reversi::BOARD_SIZE {
-                                game_after_move = game.clone();
                                 if game_after_move.make_move((row, col)) {
 
                                     let (current_score, current_eval_return) = eval(&game_after_move, depth - 1);
@@ -205,6 +198,8 @@ fn eval(game: &reversi::Game, depth: u8) -> (i16, EvalReturn) {
                                             best_score = current_score;
                                         }
                                     }
+
+                                    game_after_move = game.clone();
 
                                 }
                             }
@@ -224,11 +219,10 @@ fn eval(game: &reversi::Game, depth: u8) -> (i16, EvalReturn) {
                         let mut best_score = DARK_STARTING_SCORE;
                         let mut best_end_score: i16 = DARK_STARTING_SCORE;
                         let mut fixed_cells_boards: Vec<reversi::Board> = Vec::new();
-                        let mut game_after_move;
+                        let mut game_after_move = game.clone();
 
                         for row in 0..reversi::BOARD_SIZE {
                             for col in 0..reversi::BOARD_SIZE {
-                                game_after_move = game.clone();
                                 if game_after_move.make_move((row, col)) {
 
                                     let (current_score, current_eval_return) = eval(&game_after_move, depth - 1);
@@ -245,6 +239,8 @@ fn eval(game: &reversi::Game, depth: u8) -> (i16, EvalReturn) {
                                             best_score = current_score;
                                         }
                                     }
+
+                                    game_after_move = game.clone();
 
                                 }
                             }
@@ -388,4 +384,105 @@ fn check_move_along_direction (current_player: reversi::Player, board: &reversi:
     }
 
     false
+}
+
+
+
+fn heavy_eval(game: &reversi::Game) -> i16 {
+    const CORNER_BONUS: i16 = 15;
+    const ODD_MALUS: i16 = 3;
+    const EVEN_BONUS: i16 = 3;
+    const ODD_CORNER_MALUS: i16 = 10;
+    const EVEN_CORNER_BONUS: i16 = 5;
+    const FIXED_BONUS: i16 = 3;
+
+    const SIDES: [( (usize, usize), (usize, usize), (usize, usize), (usize, usize), (usize, usize), (usize, usize), (usize, usize) ); 4] = [
+        ( (0,0), (0,1), (1,1), (0,2), (2,2), (1,0), (2,0) ), // NW corner
+        ( (0,7), (1,7), (1,6), (2,7), (2,5), (0,6), (0,5) ), // NE corner
+        ( (7,0), (6,0), (6,1), (5,0), (5,2), (7,1), (7,2) ), // SW corner
+        ( (7,7), (6,7), (6,6), (5,7), (5,5), (7,6), (7,6) ), // SE corner
+        ];
+
+
+    //let (score_light, score_dark) = game.get_score();
+    let mut score: i16 = 0; // ( game.get_score_diff() * FIXED_BONUS * game.get_tempo() as i16 ) / 64; // (score_light as i16) - (score_dark as i16);
+
+    for &(corner, odd, odd_corner, even, even_corner, counter_odd, counter_even) in SIDES.iter() {
+
+        if let reversi::Cell::Taken { disk } = game.get_cell(corner) {
+            match disk {
+                reversi::Player::Light => {
+                    score += CORNER_BONUS;
+                    if let reversi::Cell::Taken { disk: reversi::Player::Light } = game.get_cell(odd) {
+                        score += FIXED_BONUS;
+                        if let reversi::Cell::Taken { disk: reversi::Player::Light } = game.get_cell(even) {
+                            score += FIXED_BONUS;
+                        }
+                    }
+                    if let reversi::Cell::Taken { disk: reversi::Player::Light } = game.get_cell(counter_odd) {
+                        score += FIXED_BONUS;
+                        if let reversi::Cell::Taken { disk: reversi::Player::Light } = game.get_cell(counter_even) {
+                            score += FIXED_BONUS;
+                        }
+                    }
+                }
+                reversi::Player::Dark => {
+                    score -= CORNER_BONUS;
+                    if let reversi::Cell::Taken { disk: reversi::Player::Dark } = game.get_cell(odd) {
+                        score -= FIXED_BONUS;
+                        if let reversi::Cell::Taken { disk: reversi::Player::Dark } = game.get_cell(even) {
+                            score -= FIXED_BONUS;
+                        }
+                    }
+                    if let reversi::Cell::Taken { disk: reversi::Player::Dark } = game.get_cell(counter_odd) {
+                        score -= FIXED_BONUS;
+                        if let reversi::Cell::Taken { disk: reversi::Player::Dark } = game.get_cell(counter_even) {
+                            score -= FIXED_BONUS;
+                        }
+                    }
+                }
+            }
+
+        } else {
+
+            if let reversi::Cell::Taken { disk } = game.get_cell(odd) {
+                match disk {
+                    reversi::Player::Light => score -= ODD_MALUS,
+                    reversi::Player::Dark  => score += ODD_MALUS,
+                }
+            } else if let reversi::Cell::Taken { disk } = game.get_cell(even) {
+                match disk {
+                    reversi::Player::Light => score += EVEN_BONUS,
+                    reversi::Player::Dark  => score -= EVEN_BONUS,
+                }
+            }
+
+            if let reversi::Cell::Taken { disk } = game.get_cell(counter_odd) {
+                match disk {
+                    reversi::Player::Light => score -= ODD_MALUS,
+                    reversi::Player::Dark  => score += ODD_MALUS,
+                }
+            } else if let reversi::Cell::Taken { disk } = game.get_cell(counter_even) {
+                match disk {
+                    reversi::Player::Light => score += EVEN_BONUS,
+                    reversi::Player::Dark  => score -= EVEN_BONUS,
+                }
+            }
+
+            if let reversi::Cell::Taken { disk } = game.get_cell(odd_corner) {
+                match disk {
+                    reversi::Player::Light => score -= ODD_CORNER_MALUS,
+                    reversi::Player::Dark  => score += ODD_CORNER_MALUS,
+                }
+
+            } else if let reversi::Cell::Taken { disk } = game.get_cell(even_corner) {
+                match disk {
+                    reversi::Player::Light => score += EVEN_CORNER_BONUS,
+                    reversi::Player::Dark  => score -= EVEN_CORNER_BONUS,
+                }
+            }
+        }
+    }
+
+    score
 }
