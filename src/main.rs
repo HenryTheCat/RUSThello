@@ -10,11 +10,11 @@
 // External crates
 extern crate reversi;
 extern crate rand;
-extern crate probability;
 
 // Modules
 mod interface;
-mod player;
+mod human_player;
+mod ai_player;
 
 use reversi::{ReversiError, Side};
 use reversi::game::{PlayerAction, IsPlayer, Game};
@@ -26,10 +26,10 @@ pub enum OtherAction {
     Quit,
 }
 
-type Action = PlayerAction<OtherAction>;
-type Result<T> = result::Result<T, ReversiError>;
+pub type Action = PlayerAction<OtherAction>;
+pub type Result<T> = result::Result<T, ReversiError>;
 
-pub fn main() {
+fn main() {
     // Main intro
     interface::intro();
 
@@ -66,11 +66,11 @@ fn play_game() -> Result<()> {
         UserCommand::Quit => return Ok(()),
         UserCommand::HumanPlayer => {
             dark_human = true;
-            Box::new(player::HumanPlayer) as Box<IsPlayer<OtherAction>>
+            Box::new(human_player::HumanPlayer) as Box<IsPlayer<OtherAction>>
         }
-        UserCommand::AiWeak   => Box::new(player::AiPlayer::Weak)   as Box<IsPlayer<OtherAction>>,
-        UserCommand::AiMedium => Box::new(player::AiPlayer::Medium) as Box<IsPlayer<OtherAction>>,
-        UserCommand::AiStrong => Box::new(player::AiPlayer::Strong) as Box<IsPlayer<OtherAction>>,
+        UserCommand::AiWeak   => Box::new(ai_player::AiPlayer::Weak)   as Box<IsPlayer<OtherAction>>,
+        UserCommand::AiMedium => Box::new(ai_player::AiPlayer::Medium) as Box<IsPlayer<OtherAction>>,
+        UserCommand::AiStrong => Box::new(ai_player::AiPlayer::Strong) as Box<IsPlayer<OtherAction>>,
         _ => panic!("Returned an invalid player choice"),
     };
     let mut light_human = false;
@@ -78,11 +78,11 @@ fn play_game() -> Result<()> {
         UserCommand::Quit => return Ok(()),
         UserCommand::HumanPlayer => {
             light_human = true;
-            Box::new(player::HumanPlayer) as Box<IsPlayer<OtherAction>>
+            Box::new(human_player::HumanPlayer) as Box<IsPlayer<OtherAction>>
         }
-        UserCommand::AiWeak   => Box::new(player::AiPlayer::Weak)   as Box<IsPlayer<OtherAction>>,
-        UserCommand::AiMedium => Box::new(player::AiPlayer::Medium) as Box<IsPlayer<OtherAction>>,
-        UserCommand::AiStrong => Box::new(player::AiPlayer::Strong) as Box<IsPlayer<OtherAction>>,
+        UserCommand::AiWeak   => Box::new(ai_player::AiPlayer::Weak)   as Box<IsPlayer<OtherAction>>,
+        UserCommand::AiMedium => Box::new(ai_player::AiPlayer::Medium) as Box<IsPlayer<OtherAction>>,
+        UserCommand::AiStrong => Box::new(ai_player::AiPlayer::Strong) as Box<IsPlayer<OtherAction>>,
         _ => panic!("Returned an invalid player choice"),
     };
 

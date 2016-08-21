@@ -2,17 +2,14 @@
 name = "rusthello"
 version = "2.0.0"
 authors = ["Enrico Ghiorzi <enrico.ghiorzi@gmail.com>"]
-description = "This small project was begun as an exercise to learn some Rust programming language.
-RUSThello features a basic shell interface. Human players and different kinds of AI are supported. Better AIs are currently under developement.
-Uses the `reversi` library (https://github.com/EGhiorzi/reversi)"
+description = "This small project was begun as an exercise to learn some Rust programming language. RUSThello features a basic shell interface. Human players and different kinds of AI are supported. Better AIs are currently under developement. Uses the `reversi` library (https://github.com/EGhiorzi/reversi)"
 repository = "https://github.com/EGhiorzi/rusthello"
 license = "MIT"
 keywords = ["reversi", "othello", "ai"]
 
 [dependencies]
 rand="0.3.*"
-probability="0.15.*"
 
 [dependencies.reversi]
 version = "0.1.*"
-path = "../reversi"
+git = "https://github.com/EGhiorzi/reversi/"
