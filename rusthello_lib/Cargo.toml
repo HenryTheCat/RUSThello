@@ -1,7 +1,0 @@
-[package]
-name = "rusthello_lib"
-version = "0.2.0"
-authors = ["Enrico Ghiorzi <enrico.ghiorzi@gmail.com>"]
-
-[lib]
-name = "rusthello_lib"
