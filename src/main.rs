@@ -49,7 +49,7 @@ fn main() {
             UserCommand::Credits => interface::credits(),
             // Quit RUSThello
             UserCommand::Quit => {
-                interface::quitting_message(&None);
+                interface::quitting_message(None);
                 break;
             }
             _ => panic!("Main got a user command it shouldn't have got!"),

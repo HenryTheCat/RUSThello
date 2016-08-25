@@ -22,7 +22,7 @@ dependencies = [
 [[package]]
 name = "reversi"
 version = "0.1.0"
-source = "git+https://github.com/EGhiorzi/reversi/#08077e91841d07d8c8331cc3e43534fa51392050"
+source = "git+https://github.com/EGhiorzi/reversi/#36e3cf33586b7b2ccc715d7e0d6b0ba67e799b99"
 
 [metadata]
 "checksum libc 0.2.15 (registry+https://github.com/rust-lang/crates.io-index)" = "23e3757828fa702a20072c37ff47938e9dd331b92fac6e223d26d4b7a55f7ee2"

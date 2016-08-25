@@ -163,8 +163,9 @@ pub fn credits() {
 \t-------------------------
 \tRUSThello v. {}
 \tby Enrico Ghiorzi
-\tCopyright (c) 2015-2016 by Enrico Ghiorzi
-\tReleased under the MIT license
+\tCopyright (c) 2015-2016
+\tby Enrico Ghiorzi
+\tReleased under MIT license
 \t-------------------------", env!("CARGO_PKG_VERSION"));
 }
 
@@ -222,7 +223,7 @@ pub fn choose_new_player(side: Side) -> UserCommand {
 /// If the move if illegal, it ask for another input until the given move is a legal one.
 pub fn human_make_move(turn: &Turn) -> Result<Action> {
 
-    if let Some(side) = *turn.get_state() {
+    if let Some(side) = turn.get_state() {
         match side {
 			Side::Dark  => print!("\t{} Dark  moves: ", DARK_DISK),
             Side::Light => print!("\t{} Light moves: ", LIGHT_DISK),
@@ -270,7 +271,7 @@ pub fn human_make_move(turn: &Turn) -> Result<Action> {
 pub fn draw_board(turn: &Turn) {
     let board = turn.get_board();
     // Declare board_to_string and add column reference at the top
-    let mut board_to_string: String = "\n\t   a b c d e f g h\n\n".to_string();
+    let mut board_to_string: String = "\n\t   A B C D E F G H\n".to_string();
 
     // For every row add a row reference to the left
     for row in 0..BOARD_SIZE {
@@ -279,7 +280,7 @@ pub fn draw_board(turn: &Turn) {
         for col in 0..BOARD_SIZE {
 			let coord = Coord::new(row, col);
 			board_to_string.push(
-	            match *board.get_cell(coord).unwrap() {
+	            match board.get_cell(coord).unwrap() {
 	                // Light and Dark cells are represented by white and black bullets
 	                Some(disk) => match disk.get_side() {
 						Side::Dark  => DARK_DISK,
@@ -303,7 +304,7 @@ pub fn draw_board(turn: &Turn) {
     }
 
     // Add column reference at the bottom
-    board_to_string.push_str("\n\t   a b c d e f g h\n");
+    board_to_string.push_str("\t   A B C D E F G H\n");
 
     // Print board
     println!("{}", board_to_string);
@@ -311,7 +312,7 @@ pub fn draw_board(turn: &Turn) {
     // Print current score and game info
     let (score_dark, score_light) = turn.get_score();
 
-    match *turn.get_state() {
+    match turn.get_state() {
         Some(side) => {
             match side {
 				Side::Dark  => println!("\t    {:>2} {} <<< {} {:<2}\n", score_dark, DARK_DISK, LIGHT_DISK, score_light),
@@ -331,20 +332,20 @@ pub fn draw_board(turn: &Turn) {
 
 /// Prints a message with info on a move.
 pub fn move_message(side: Side, coord: Coord) {
-    let char_col = (('a' as u8) + (coord.col as u8)) as char;
+    let char_col = (('a' as u8) + (coord.get_col() as u8)) as char;
     match side {
-		Side::Dark  => println!("\t{} Dark  moves: {}{}",  DARK_DISK, char_col, coord.row + 1),
-        Side::Light => println!("\t{} Light moves: {}{}", LIGHT_DISK, char_col, coord.row + 1),
+		Side::Dark  => println!("\t{} Dark  moves: {}{}",  DARK_DISK, char_col, coord.get_row() + 1),
+        Side::Light => println!("\t{} Light moves: {}{}", LIGHT_DISK, char_col, coord.get_row() + 1),
     }
 }
 
 
 // Print a last message before a player quits the game
-pub fn quitting_message(state: &State) {
-    match *state {
+pub fn quitting_message(state: State) {
+    match state {
 		Some(Side::Dark)  => println!("\tDark is running away, the coward!"),
         Some(Side::Light) => println!("\tLight is running away, the coward!"),
-		None => println!("\tGoodbye!"),
+		None => println!("\n\tGoodbye!"),
     }
 }
 
