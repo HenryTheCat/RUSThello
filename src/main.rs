@@ -9,6 +9,7 @@
 
 // External crates
 extern crate reversi;
+extern crate termion;
 extern crate rand;
 
 // Modules
@@ -20,6 +21,7 @@ use reversi::{ReversiError, Side};
 use reversi::game::{PlayerAction, IsPlayer, Game};
 use interface::UserCommand;
 use std::result;
+use std::cmp::Ordering;
 
 pub enum OtherAction {
     Help,
@@ -68,9 +70,13 @@ fn play_game() -> Result<()> {
             dark_human = true;
             Box::new(human_player::HumanPlayer) as Box<IsPlayer<OtherAction>>
         }
-        UserCommand::AiWeak   => Box::new(ai_player::AiPlayer::Weak)   as Box<IsPlayer<OtherAction>>,
-        UserCommand::AiMedium => Box::new(ai_player::AiPlayer::Medium) as Box<IsPlayer<OtherAction>>,
-        UserCommand::AiStrong => Box::new(ai_player::AiPlayer::Strong) as Box<IsPlayer<OtherAction>>,
+        UserCommand::AiWeak => Box::new(ai_player::AiPlayer::Weak) as Box<IsPlayer<OtherAction>>,
+        UserCommand::AiMedium => {
+            Box::new(ai_player::AiPlayer::Medium) as Box<IsPlayer<OtherAction>>
+        }
+        UserCommand::AiStrong => {
+            Box::new(ai_player::AiPlayer::Strong) as Box<IsPlayer<OtherAction>>
+        }
         _ => panic!("Returned an invalid player choice"),
     };
     let mut light_human = false;
@@ -80,9 +86,13 @@ fn play_game() -> Result<()> {
             light_human = true;
             Box::new(human_player::HumanPlayer) as Box<IsPlayer<OtherAction>>
         }
-        UserCommand::AiWeak   => Box::new(ai_player::AiPlayer::Weak)   as Box<IsPlayer<OtherAction>>,
-        UserCommand::AiMedium => Box::new(ai_player::AiPlayer::Medium) as Box<IsPlayer<OtherAction>>,
-        UserCommand::AiStrong => Box::new(ai_player::AiPlayer::Strong) as Box<IsPlayer<OtherAction>>,
+        UserCommand::AiWeak => Box::new(ai_player::AiPlayer::Weak) as Box<IsPlayer<OtherAction>>,
+        UserCommand::AiMedium => {
+            Box::new(ai_player::AiPlayer::Medium) as Box<IsPlayer<OtherAction>>
+        }
+        UserCommand::AiStrong => {
+            Box::new(ai_player::AiPlayer::Strong) as Box<IsPlayer<OtherAction>>
+        }
         _ => panic!("Returned an invalid player choice"),
     };
 
@@ -99,38 +109,51 @@ fn play_game() -> Result<()> {
     while !game.is_ended() {
         let state_side = game.get_current_state().unwrap();
         match game.play_turn() {
-            Ok(action) => match action{
-                PlayerAction::Move(coord) => {
-                    match state_side {
-                        Side::Dark => {
-                            if !dark_human {
-                                interface::move_message(state_side, coord);
+            Ok(action) => {
+                match action {
+                    PlayerAction::Move(coord) => {
+                        match state_side {
+                            Side::Dark => {
+                                if !dark_human {
+                                    interface::move_message(state_side, coord);
+                                }
+                            }
+                            Side::Light => {
+                                if !light_human {
+                                    interface::move_message(state_side, coord);
+                                }
                             }
                         }
-                        Side::Light => {
-                            if !light_human {
-                                interface::move_message(state_side, coord);
-                            }
-                        }
+                        interface::draw_board(game.get_current_turn());
                     }
-                    interface::draw_board(game.get_current_turn());
+                    PlayerAction::Undo => interface::draw_board(game.get_current_turn()),
+                    PlayerAction::Other(OtherAction::Help) => {
+                        interface::help();
+                        interface::draw_board(game.get_current_turn());
+                    }
+                    PlayerAction::Other(OtherAction::Quit) => {
+                        interface::quitting_message(game.get_current_state());
+                        return Ok(());
+                    }
                 }
-                PlayerAction::Undo => interface::draw_board(game.get_current_turn()),
-                PlayerAction::Other(OtherAction::Help) => {
-                    interface::help();
-                    interface::draw_board(game.get_current_turn());
+            }
+            Err(err) => {
+                match err {
+                    ReversiError::NoUndo => {
+                        interface::no_undo_message(game.get_current_state().unwrap())
+                    }
+                    _ => return Err(err),
                 }
-                PlayerAction::Other(OtherAction::Quit) => {
-                    interface::quitting_message(game.get_current_state());
-                    return Ok(());
-                }
-            },
-            Err(err) => match err {
-                ReversiError::NoUndo => interface::no_undo_message(game.get_current_state().unwrap()),
-                _ => return Err(err),
             }
         }
     }
+
+    let (score_dark, score_light) = game.get_current_score();
+    interface::endgame_message(match score_dark.cmp(&score_light) {
+        Ordering::Greater => Some(Side::Dark),
+        Ordering::Less => Some(Side::Light),
+        Ordering::Equal => None,
+    });
 
     Ok(())
 }
