@@ -45,17 +45,39 @@ pub enum UserCommand {
     Quit,
 }
 
-const INTRO_TITLE: &'static str =
-"\n\n
-\t-------------------------
-\t------- RUSThello -------
-\t-------------------------";
+const COLUMN_WIDTH: u8 = 25;
+
+fn ruler() {
+    let mut ruler = "\t".to_string();
+    for _ in 0..COLUMN_WIDTH {
+        ruler.push('-');
+    }
+    println!("{}", ruler);
+}
+
+fn header(title: &str) {
+    print!("\n\n\n {}", style::Bold);
+    ruler();
+    let middle = (COLUMN_WIDTH - title.len() as u8 - 2) / 2;
+    let mut header = "\t".to_string();
+    for _ in 0..middle{
+        header.push('-');
+    }
+    header.push_str(&format!(" {} ", title));
+    for _ in (middle + title.len() as u8 + 2)..COLUMN_WIDTH {
+        header.push('-');
+    }
+    println!("{}", header);
+    ruler();
+    print!("{}", style::Reset);
+}
+
 const INTRO: &'static str =
 "\t  a simple Reversi game
 \twritten in Rust with love";
 
 pub fn intro() {
-    println!("{}{}{}", style::Bold, INTRO_TITLE, style::Reset);
+    header("RUSThello");
     println!("{}", INTRO);
     if REDOX_BUILD {
         println!("\t  Redox Edition");
@@ -63,39 +85,29 @@ pub fn intro() {
     println!("\t        v. {}", env!("CARGO_PKG_VERSION"));
 }
 
-const MAIN_MENU_TITLE: &'static str =
-"\n\n
-\t-------------------------
-\t------- MAIN MENU -------
-\t-------------------------";
 const MAIN_MENU: &'static str =
 "\tn - New match
 \th - Help
 \tc - Credits
-\tq - Quit RUSThello
-\t-------------------------";
+\tq - Quit RUSThello";
 
 pub fn main_menu() {
-    println!("{}{}{}", style::Bold, MAIN_MENU_TITLE, style::Reset);
+    header("MAIN MENU");
     println!("{}", MAIN_MENU);
+    ruler();
 }
 
-const NEW_PLAYER_MENU_TITLE: &'static str =
-"\n\n
-\t-------------------------
-\t---- CHOOSE A PLAYER ----
-\t-------------------------";
 const NEW_PLAYER_MENU: &'static str =
 "\th - Human Player
 \tw - Weak   AI
 \tm - Medium AI
 \ts - Strong AI
-\tq - Quit match
-\t-------------------------";
+\tq - Quit match";
 
 pub fn new_player_menu() {
-    println!("{}{}{}", style::Bold, NEW_PLAYER_MENU_TITLE, style::Reset);
+    header("CHOOSE PLAYER");
     println!("{}", NEW_PLAYER_MENU);
+    ruler();
 }
 
 const COMMANDS_INFO: &'static str = "\n\n
@@ -110,11 +122,6 @@ pub fn commands_info() {
     println!("{}", COMMANDS_INFO);
 }
 
-const HELP_TITLE: &'static str =
-"\n\n
-\t-------------------------
-\t-------- REVERSI --------
-\t-------------------------";
 const HELP: &'static str =
 "\tReversi is a board game where two players compete against each other. The game is played \
 on a 8x8 board, just like chess but for the squares’ colour which is always green. There are \
@@ -138,11 +145,6 @@ sometimes to end before that, leaving empty squares on the board.\n
 the player with more disks turned to its side wins. Ties are possible as well, if both \
 player have the same number of disks.";
 
-const RUSTHELLO_TITLE: &'static str =
-"\n\n
-\t-------------------------
-\t------- RUSThello -------
-\t-------------------------";
 const RUSTHELLO: &'static str =
 "\tTo play RUSThello you first have to choose who is playing on each side, Dark and Light. You can \
 choose a human players or an AI. Choose human for both players and challenge a friend, or \
@@ -158,20 +160,14 @@ as many times as you like), 'help' (or 'h') to see this help message again, and 
 'q') to quit the game.";
 
 pub fn help() {
-    println!("{}{}{}", style::Bold, HELP_TITLE, style::Reset);
+    header("REVERSI");
     println!("{}", HELP);
-    println!("{}{}{}", style::Bold, RUSTHELLO_TITLE, style::Reset);
+    header("RUSThello");
     println!("{}", RUSTHELLO);
 }
 
-const CREDITS_TITLE: &'static str =
-"\n\n
-\t-------------------------
-\t-------- CREDITS --------
-\t-------------------------";
-
 pub fn credits() {
-    println!("{}{}{}", style::Bold, CREDITS_TITLE, style::Reset);
+    header("CREDITS");
     println!("\tRUSThello v. {}", env!("CARGO_PKG_VERSION"));
     if REDOX_BUILD {
         println!("\tRedox Edition (https://redox-os.org/)");
