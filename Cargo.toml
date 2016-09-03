@@ -9,6 +9,7 @@ keywords = ["reversi", "othello", "ai"]
 
 [dependencies]
 rand="0.3.*"
+termion="1.0"
 
 [dependencies.reversi]
 version = "0.1.*"

@@ -2,7 +2,7 @@
 
 use reversi;
 use reversi::{board, turn, game};
-use reversi::board::{Coord};
+use reversi::board::Coord;
 use ::{Result, Action};
 use std::cmp::Ordering;
 use std::thread;
@@ -28,12 +28,12 @@ impl PartialOrd<Score> for Score {
             Score::Running(val1) => {
                 match *other {
                     Score::Running(val2) => val1 > val2,
-                    Score::Ended(scr2) => scr2 < 0i16 || ( scr2 == 0i16 && val1 > 0f64 ),
+                    Score::Ended(scr2) => scr2 < 0i16 || (scr2 == 0i16 && val1 > 0f64),
                 }
             }
             Score::Ended(scr1) => {
                 match *other {
-                    Score::Running(val2) => scr1 > 0i16 || ( scr1 == 0i16 && val2 < 0f64 ),
+                    Score::Running(val2) => scr1 > 0i16 || (scr1 == 0i16 && val2 < 0f64),
                     Score::Ended(scr2) => scr1 > scr2,
                 }
             }
@@ -54,8 +54,8 @@ pub enum AiPlayer {
 impl game::IsPlayer<::OtherAction> for AiPlayer {
     /// Calls `find_best_move` with suitable parameters
     fn make_move(&self, turn: &turn::Turn) -> Result<Action> {
-        Ok(game::PlayerAction::Move(try!( match *self {
-            AiPlayer::Weak   => AiPlayer::find_best_move(turn, WEAK),
+        Ok(game::PlayerAction::Move(try!(match *self {
+            AiPlayer::Weak => AiPlayer::find_best_move(turn, WEAK),
             AiPlayer::Medium => AiPlayer::find_best_move(turn, MEDIUM),
             AiPlayer::Strong => AiPlayer::find_best_move(turn, STRONG),
         })))
@@ -74,7 +74,9 @@ impl AiPlayer {
             for col in 0..board::BOARD_SIZE {
                 let coord = board::Coord::new(row, col);
                 if let Ok(turn_after_move) = turn.make_move(coord) {
-                    threadjoins.push(thread::spawn(move || Ok((coord, try!(AiPlayer::ai_eval(&turn_after_move, depth)))) ));
+                    threadjoins.push(thread::spawn(move || {
+                        Ok((coord, try!(AiPlayer::ai_eval(&turn_after_move, depth))))
+                    }));
                 }
             }
         }
@@ -84,10 +86,14 @@ impl AiPlayer {
             let (new_coord, new_score) = try!(threadjoin.join().expect("Could not receive answer"));
             if let Some((_, best_score)) = some_best_move {
                 match side {
-                    reversi::Side::Dark  if new_score < best_score => some_best_move = Some((new_coord, new_score)),
-                    reversi::Side::Light if new_score > best_score => some_best_move = Some((new_coord, new_score)),
+                    reversi::Side::Dark if new_score < best_score => {
+                        some_best_move = Some((new_coord, new_score))
+                    }
+                    reversi::Side::Light if new_score > best_score => {
+                        some_best_move = Some((new_coord, new_score))
+                    }
                     // If the new score is not better than the previous one, do nothing.
-                    _ => {},
+                    _ => {}
                 }
             } else {
                 some_best_move = Some((new_coord, new_score));
@@ -121,13 +127,18 @@ impl AiPlayer {
                     for &some_coord in &moves[0..num_moves] {
                         if let Some(coord) = some_coord {
                             let turn_after_move = try!(turn.make_move(coord));
-                            let new_score = try!(AiPlayer::ai_eval(&turn_after_move, depth / num_moves as f64));
+                            let new_score = try!(AiPlayer::ai_eval(&turn_after_move,
+                                                                   depth / num_moves as f64));
                             if let Some(best_score) = some_best_score {
                                 match side {
-                                    reversi::Side::Dark  if new_score < best_score => some_best_score = Some(new_score),
-                                    reversi::Side::Light if new_score > best_score => some_best_score = Some(new_score),
+                                    reversi::Side::Dark if new_score < best_score => {
+                                        some_best_score = Some(new_score)
+                                    }
+                                    reversi::Side::Light if new_score > best_score => {
+                                        some_best_score = Some(new_score)
+                                    }
                                     // If the new score is not better than the previous one, do nothing.
-                                    _ => {},
+                                    _ => {}
                                 }
                             } else {
                                 some_best_score = Some(new_score);
@@ -140,7 +151,9 @@ impl AiPlayer {
                     let between = Range::new(-RANDOMNESS, RANDOMNESS);
                     let mut rng = rand::thread_rng();
                     let best_score = match best_score {
-                        Score::Running(val) => Score::Running(val * (1.0 + between.ind_sample(&mut rng))),
+                        Score::Running(val) => {
+                            Score::Running(val * (1.0 + between.ind_sample(&mut rng)))
+                        }
                         _ => best_score,
                     };
 
@@ -152,22 +165,26 @@ impl AiPlayer {
 
     fn heavy_eval(turn: &turn::Turn) -> Result<f64> {
         // weights
-        const CORNER_BONUS:         u16 = 45;
-        const ODD_CORNER_MALUS:     u16 = 25;
-        const EVEN_CORNER_BONUS:    u16 = 10;
-        const ODD_MALUS:            u16 = 6; // x2
-        const EVEN_BONUS:           u16 = 4; // x2
+        const CORNER_BONUS: u16 = 45;
+        const ODD_CORNER_MALUS: u16 = 25;
+        const EVEN_CORNER_BONUS: u16 = 10;
+        const ODD_MALUS: u16 = 6; // x2
+        const EVEN_BONUS: u16 = 4; // x2
         // ------------------------ Sum = 100
 
-        const SIDES: [( (usize, usize), (usize, usize), (usize, usize), (usize, usize), (usize, usize), (usize, usize), (usize, usize) ); 4] = [
-            ( (0,0), (0,1), (1,1), (0,2), (2,2), (1,0), (2,0) ), // NW corner
-            ( (0,7), (1,7), (1,6), (2,7), (2,5), (0,6), (0,5) ), // NE corner
-            ( (7,0), (6,0), (6,1), (5,0), (5,2), (7,1), (7,2) ), // SW corner
-            ( (7,7), (6,7), (6,6), (5,7), (5,5), (7,6), (7,5) ), // SE corner
-            ];
+        const SIDES: [((usize, usize),
+          (usize, usize),
+          (usize, usize),
+          (usize, usize),
+          (usize, usize),
+          (usize, usize),
+          (usize, usize)); 4] = [((0, 0), (0, 1), (1, 1), (0, 2), (2, 2), (1, 0), (2, 0)), /* NW corner */
+                                 ((0, 7), (1, 7), (1, 6), (2, 7), (2, 5), (0, 6), (0, 5)), /* NE corner */
+                                 ((7, 0), (6, 0), (6, 1), (5, 0), (5, 2), (7, 1), (7, 2)), /* SW corner */
+                                 ((7, 7), (6, 7), (6, 6), (5, 7), (5, 5), (7, 6), (7, 5)) /* SE corner */];
 
         let mut score_light: u16 = 1;
-        let mut score_dark:  u16 = 1;
+        let mut score_dark: u16 = 1;
 
         for &(corner, odd, odd_corner, even, even_corner, counter_odd, counter_even) in &SIDES {
 
@@ -177,49 +194,51 @@ impl AiPlayer {
                         score_light += CORNER_BONUS;
                     }
                     reversi::Side::Dark => {
-                        score_dark  += CORNER_BONUS;
+                        score_dark += CORNER_BONUS;
                     }
                 }
             } else {
 
                 if let Some(disk) = try!(turn.get_cell(Coord::new(odd.0, odd.1))) {
                     match disk.get_side() {
-                        reversi::Side::Light => score_dark  += ODD_MALUS,
-                        reversi::Side::Dark  => score_light += ODD_MALUS,
+                        reversi::Side::Light => score_dark += ODD_MALUS,
+                        reversi::Side::Dark => score_light += ODD_MALUS,
                     }
                 } else if let Some(disk) = try!(turn.get_cell(Coord::new(even.0, even.1))) {
                     match disk.get_side() {
                         reversi::Side::Light => score_light += EVEN_BONUS,
-                        reversi::Side::Dark  => score_dark  += EVEN_BONUS,
+                        reversi::Side::Dark => score_dark += EVEN_BONUS,
                     }
                 }
 
                 if let Some(disk) = try!(turn.get_cell(Coord::new(counter_odd.0, counter_odd.1))) {
                     match disk.get_side() {
-                        reversi::Side::Light => score_dark  += ODD_MALUS,
-                        reversi::Side::Dark  => score_light += ODD_MALUS,
+                        reversi::Side::Light => score_dark += ODD_MALUS,
+                        reversi::Side::Dark => score_light += ODD_MALUS,
                     }
-                } else if let Some(disk) = try!(turn.get_cell(Coord::new(counter_even.0, counter_even.1))) {
+                } else if let Some(disk) =
+                              try!(turn.get_cell(Coord::new(counter_even.0, counter_even.1))) {
                     match disk.get_side() {
                         reversi::Side::Light => score_light += EVEN_BONUS,
-                        reversi::Side::Dark  => score_dark  += EVEN_BONUS,
+                        reversi::Side::Dark => score_dark += EVEN_BONUS,
                     }
                 }
 
                 if let Some(disk) = try!(turn.get_cell(Coord::new(odd_corner.0, odd_corner.1))) {
                     match disk.get_side() {
-                        reversi::Side::Light => score_dark  += ODD_CORNER_MALUS,
-                        reversi::Side::Dark  => score_light += ODD_CORNER_MALUS,
+                        reversi::Side::Light => score_dark += ODD_CORNER_MALUS,
+                        reversi::Side::Dark => score_light += ODD_CORNER_MALUS,
                     }
 
-                } else if let Some(disk) = try!(turn.get_cell(Coord::new(even_corner.0, even_corner.1))) {
+                } else if let Some(disk) =
+                              try!(turn.get_cell(Coord::new(even_corner.0, even_corner.1))) {
                     match disk.get_side() {
                         reversi::Side::Light => score_light += EVEN_CORNER_BONUS,
-                        reversi::Side::Dark  => score_dark  += EVEN_CORNER_BONUS,
+                        reversi::Side::Dark => score_dark += EVEN_CORNER_BONUS,
                     }
                 }
             }
         }
-        Ok( (score_light as f64 - score_dark as f64 ) / ( score_dark + score_light) as f64 )
+        Ok((score_light as f64 - score_dark as f64) / (score_dark + score_light) as f64)
     }
 }

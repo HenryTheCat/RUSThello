@@ -4,6 +4,7 @@ version = "2.0.0"
 dependencies = [
  "rand 0.3.14 (registry+https://github.com/rust-lang/crates.io-index)",
  "reversi 0.1.0 (git+https://github.com/EGhiorzi/reversi/)",
+ "termion 1.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -22,7 +23,15 @@ dependencies = [
 [[package]]
 name = "reversi"
 version = "0.1.0"
-source = "git+https://github.com/EGhiorzi/reversi/#36e3cf33586b7b2ccc715d7e0d6b0ba67e799b99"
+source = "git+https://github.com/EGhiorzi/reversi/#7b11fa98ac0faa22538a4ed3ec595699b69ec80f"
+
+[[package]]
+name = "termion"
+version = "1.0.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "libc 0.2.15 (registry+https://github.com/rust-lang/crates.io-index)",
+]
 
 [metadata]
 "checksum libc 0.2.15 (registry+https://github.com/rust-lang/crates.io-index)" = "23e3757828fa702a20072c37ff47938e9dd331b92fac6e223d26d4b7a55f7ee2"
