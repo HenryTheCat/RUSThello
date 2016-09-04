@@ -9,30 +9,11 @@ use reversi::turn::{State, Turn};
 use ::{Result, Action, OtherAction};
 use termion::{color, style};
 
-#[cfg(target_os = "redox")]
-pub const REDOX_BUILD: bool = true;
-#[cfg(not(target_os = "redox"))]
-pub const REDOX_BUILD: bool = false;
-
 // ASCII version
-#[cfg(target_os = "redox")]
 const DARK_DISK: char = '@';
-#[cfg(target_os = "redox")]
 const LIGHT_DISK: char = '@';
-#[cfg(target_os = "redox")]
 const EMPTY_CELL: char = '*';
-#[cfg(target_os = "redox")]
 const LEGAL_MOVE: char = '*';
-
-// ANSI version
-#[cfg(not(target_os = "redox"))]
-const DARK_DISK: char = '●';
-#[cfg(not(target_os = "redox"))]
-const LIGHT_DISK: char = '●';
-#[cfg(not(target_os = "redox"))]
-const EMPTY_CELL: char = '∙';
-#[cfg(not(target_os = "redox"))]
-const LEGAL_MOVE: char = '∙';
 
 pub enum UserCommand {
     NewGame,
@@ -79,9 +60,7 @@ const INTRO: &'static str =
 pub fn intro() {
     header("RUSThello");
     println!("{}", INTRO);
-    if REDOX_BUILD {
-        println!("\t  Redox Edition");
-    }
+    println!("\t  Redox Edition");
     println!("\t        v. {}", env!("CARGO_PKG_VERSION"));
 }
 
@@ -169,12 +148,8 @@ pub fn help() {
 pub fn credits() {
     header("CREDITS");
     println!("\tRUSThello v. {}", env!("CARGO_PKG_VERSION"));
-    if REDOX_BUILD {
-        println!("\tRedox Edition (https://redox-os.org/)");
-        println!("\tby Enrico Ghiorzi, with the invaluable help of the Redox community");
-    } else {
-        println!("\tby Enrico Ghiorzi");
-    }
+    println!("\tRedox Edition (https://redox-os.org/)");
+    println!("\tby Enrico Ghiorzi, with the invaluable help of the Redox community");
     println!("\tCopyright (c) 2015-2016 by Enrico Ghiorzi");
     println!("\tReleased under the MIT license");
 }
