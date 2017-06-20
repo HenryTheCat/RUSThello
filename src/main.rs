@@ -1,4 +1,4 @@
-//! RUSThello (ver. 2.0.0)
+//! `RUSThello` (v. 2.1.0)
 //! A simple Reversi game written in Rust with love.
 //! Based on `reversi` library (by the same author).
 //! Released under MIT license.
@@ -6,16 +6,24 @@
 
 #![crate_name = "rusthello"]
 #![crate_type = "bin"]
+#![feature(test)]
+#![cfg_attr(feature="clippy", feature(plugin))]
+#![cfg_attr(feature="clippy", plugin(clippy))]
 
 // External crates
+extern crate rand;
+extern crate rayon;
 extern crate reversi;
 extern crate termion;
-extern crate rand;
+extern crate test;
 
 // Modules
 mod interface;
 mod human_player;
 mod ai_player;
+
+#[cfg(test)]
+mod tests;
 
 use reversi::{ReversiError, Side};
 use reversi::game::{PlayerAction, IsPlayer, Game};
@@ -71,12 +79,8 @@ fn play_game() -> Result<()> {
             Box::new(human_player::HumanPlayer) as Box<IsPlayer<OtherAction>>
         }
         UserCommand::AiWeak => Box::new(ai_player::AiPlayer::Weak) as Box<IsPlayer<OtherAction>>,
-        UserCommand::AiMedium => {
-            Box::new(ai_player::AiPlayer::Medium) as Box<IsPlayer<OtherAction>>
-        }
-        UserCommand::AiStrong => {
-            Box::new(ai_player::AiPlayer::Strong) as Box<IsPlayer<OtherAction>>
-        }
+        UserCommand::AiMedium => Box::new(ai_player::AiPlayer::Medium) as Box<IsPlayer<OtherAction>>,
+        UserCommand::AiStrong => Box::new(ai_player::AiPlayer::Strong) as Box<IsPlayer<OtherAction>>,
         _ => panic!("Returned an invalid player choice"),
     };
     let mut light_human = false;
@@ -87,12 +91,8 @@ fn play_game() -> Result<()> {
             Box::new(human_player::HumanPlayer) as Box<IsPlayer<OtherAction>>
         }
         UserCommand::AiWeak => Box::new(ai_player::AiPlayer::Weak) as Box<IsPlayer<OtherAction>>,
-        UserCommand::AiMedium => {
-            Box::new(ai_player::AiPlayer::Medium) as Box<IsPlayer<OtherAction>>
-        }
-        UserCommand::AiStrong => {
-            Box::new(ai_player::AiPlayer::Strong) as Box<IsPlayer<OtherAction>>
-        }
+        UserCommand::AiMedium => Box::new(ai_player::AiPlayer::Medium) as Box<IsPlayer<OtherAction>>,
+        UserCommand::AiStrong => Box::new(ai_player::AiPlayer::Strong) as Box<IsPlayer<OtherAction>>,
         _ => panic!("Returned an invalid player choice"),
     };
 
@@ -106,7 +106,7 @@ fn play_game() -> Result<()> {
     interface::draw_board(game.get_current_turn());
 
     // Proceed with turn after turn till the game ends
-    while !game.is_ended() {
+    while !game.is_endgame() {
         let state_side = game.get_current_state().unwrap();
         match game.play_turn() {
             Ok(action) => {
@@ -139,21 +139,19 @@ fn play_game() -> Result<()> {
             }
             Err(err) => {
                 match err {
-                    ReversiError::NoUndo => {
-                        interface::no_undo_message(game.get_current_state().unwrap())
-                    }
+                    ReversiError::NoUndo => interface::no_undo_message(game.get_current_turn().get_state().unwrap()),
                     _ => return Err(err),
                 }
             }
         }
     }
 
-    let (score_dark, score_light) = game.get_current_score();
+    let (score_dark, score_light) = game.get_current_turn().get_score();
     interface::endgame_message(match score_dark.cmp(&score_light) {
-        Ordering::Greater => Some(Side::Dark),
-        Ordering::Less => Some(Side::Light),
-        Ordering::Equal => None,
-    });
+                                   Ordering::Greater => Some(Side::Dark),
+                                   Ordering::Less => Some(Side::Light),
+                                   Ordering::Equal => None,
+                               });
 
     Ok(())
 }
