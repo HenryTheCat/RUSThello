@@ -1,13 +1,20 @@
 //! Test module.
 
-use tests::test_ai;
-use reversi::game;
+extern crate rand;
+extern crate rayon;
+extern crate reversi;
+extern crate rusthello_lib;
+
+use reversi::game::Game;
+use rusthello_lib::ai_player::AiPlayer;
 use std::cmp::Ordering;
+
+mod test_ai;
 
 #[test]
 fn test_ai() {
 
-    let adam = ::ai_player::AiPlayer::Weak;
+    let adam = AiPlayer::Weak;
     let mut adam_wins = 0;
     let mut adam_total_score: u64 = 0;
 
@@ -17,10 +24,10 @@ fn test_ai() {
 
     let mut ties = 0;
 
-    for _ in 0..500 {
+    for _ in 0..50 {
 
         // First match: Adam is Dark, Eve is Light
-        let mut game = game::Game::new(&adam, &eve);
+        let mut game = Game::new(&adam, &eve);
 
         while !game.is_endgame() {
             game.play_turn().expect("`play_turn` returned an error");
@@ -36,7 +43,7 @@ fn test_ai() {
         eve_total_score += eve_score as u64;
 
         // Second match: Eve is Dark, Adam is Light
-        let mut game = game::Game::new(&eve, &adam);
+        let mut game = Game::new(&eve, &adam);
 
         while !game.is_endgame() {
             game.play_turn().expect("`play_turn` returned an error");

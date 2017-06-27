@@ -1,11 +1,19 @@
 [package]
 name = "rusthello"
-version = "2.1.0"
+version = "2.2.0"
 authors = ["Enrico Ghiorzi <enrico.ghiorzi@gmail.com>"]
-description = "This small project was begun as an exercise to learn some Rust programming language. RUSThello features a basic shell interface. Human players and different kinds of AI are supported. Better AIs are currently under developement. Uses the `reversi` library (https://github.com/EGhiorzi/reversi)"
+description = "This small project begun as an exercise to learn some Rust programming language. RUSThello features a basic shell interface. Human players and different kinds of AI are supported. Better AIs are currently under developement. Uses the `reversi` library (https://github.com/EGhiorzi/reversi)"
 repository = "https://github.com/EGhiorzi/rusthello"
 license = "MIT"
 keywords = ["reversi", "othello", "ai"]
+
+[lib]
+name = "rusthello_lib"
+path = "src/lib.rs"
+
+[[bin]]
+name = "rusthello"
+path = "src/main.rs"
 
 [dependencies]
 clippy = {version = "*", optional = true}
@@ -14,25 +22,25 @@ rayon="0.8.*"
 termion="1.4.*"
 
 [dependencies.reversi]
-version = "0.4.*"
+version = "0.5.*"
 git = "https://github.com/EGhiorzi/reversi/"
 
-# # The release profile, used for `cargo build --release`.
-# [profile.release]
-# opt-level = 3
-# debug = false
-# rpath = false
-# lto = true
-# debug-assertions = false
-# codegen-units = 1
-# panic = 'unwind'
-#
-# # The benchmarking profile, used for `cargo bench`.
-# [profile.bench]
-# opt-level = 3
-# debug = false
-# rpath = false
-# lto = true
-# debug-assertions = false
-# codegen-units = 1
-# panic = 'unwind'
+# The release profile, used for `cargo build --release`.
+[profile.release]
+opt-level = 3
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+codegen-units = 1
+panic = 'unwind'
+
+# The benchmarking profile, used for `cargo bench`.
+[profile.bench]
+opt-level = 3
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+codegen-units = 1
+panic = 'unwind'

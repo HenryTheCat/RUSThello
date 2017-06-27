@@ -1,7 +1,9 @@
+//! An Experimental AI to compare with the standard one.
+
 use reversi;
 use reversi::{board, turn, game};
 use reversi::board::Coord;
-use {Result, Action, Side};
+use rusthello_lib::{Result, Action, OtherAction};
 use std::cmp::Ordering;
 use rand;
 use rand::distributions::{IndependentSample, Range};
@@ -51,7 +53,7 @@ impl Ord for Score {
 
 pub struct ExpAiPlayer {}
 
-impl game::IsPlayer<::OtherAction> for ExpAiPlayer {
+impl game::IsPlayer<OtherAction> for ExpAiPlayer {
     /// Calls `find_best_move` with suitable parameters
     fn make_move(&self, turn: &turn::Turn) -> Result<Action> {
         Ok(game::PlayerAction::Move(try!(ExpAiPlayer::find_best_move(turn, STRENGHT))))
@@ -68,7 +70,7 @@ impl ExpAiPlayer {
             .ok_or(reversi::ReversiError::EndedGame(*turn))?;
 
         // Finds all possible legal moves and records their coordinates
-        let mut moves: Vec<Coord> = Vec::new();
+        let mut moves: Vec<board::Coord> = Vec::new();
         for row in 0..board::BOARD_SIZE {
             for col in 0..board::BOARD_SIZE {
                 let coord = board::Coord::new(row, col);
@@ -95,8 +97,8 @@ impl ExpAiPlayer {
                         (coord, score)
                     });
                 let best_move_and_score = match side {
-                        Side::Dark => moves_and_scores.min_by_key(|&(_, score)| score),
-                        Side::Light => moves_and_scores.max_by_key(|&(_, score)| score),
+                        reversi::Side::Dark => moves_and_scores.min_by_key(|&(_, score)| score),
+                        reversi::Side::Light => moves_and_scores.max_by_key(|&(_, score)| score),
                     }
                     .expect("No best move found!");
                 Ok(best_move_and_score.0)
@@ -127,7 +129,7 @@ impl ExpAiPlayer {
         // assert!(!this_turn.is_endgame());
 
         // Finds all possible legal moves and records their coordinates
-        let mut moves: Vec<Coord>;
+        let mut moves: Vec<board::Coord>;
         let mut turn = turn.clone();
         loop {
             moves = Vec::new();
@@ -258,33 +260,33 @@ impl ExpAiPlayer {
 
             if let Some(disk) = *turn.get_cell(corner)? {
                 match disk.get_side() {
-                    Side::Light => score_light += CORNER_BONUS,
-                    Side::Dark => score_dark += CORNER_BONUS,
+                    reversi::Side::Light => score_light += CORNER_BONUS,
+                    reversi::Side::Dark => score_dark += CORNER_BONUS,
                 }
             } else {
                 for &(coord_odd, coord_even) in &[(odd, even), (counter_odd, counter_even)] {
                     if let Some(disk) = *turn.get_cell(coord_odd)? {
                         match disk.get_side() {
-                            Side::Light => score_dark += ODD_MALUS,
-                            Side::Dark => score_light += ODD_MALUS,
+                            reversi::Side::Light => score_dark += ODD_MALUS,
+                            reversi::Side::Dark => score_light += ODD_MALUS,
                         }
                     } else if let Some(disk) = *turn.get_cell(coord_even)? {
                         match disk.get_side() {
-                            Side::Light => score_light += EVEN_BONUS,
-                            Side::Dark => score_dark += EVEN_BONUS,
+                            reversi::Side::Light => score_light += EVEN_BONUS,
+                            reversi::Side::Dark => score_dark += EVEN_BONUS,
                         }
                     }
                 }
                 if let Some(disk) = *turn.get_cell(odd_corner)? {
                     match disk.get_side() {
-                        Side::Light => score_dark += ODD_CORNER_MALUS,
-                        Side::Dark => score_light += ODD_CORNER_MALUS,
+                        reversi::Side::Light => score_dark += ODD_CORNER_MALUS,
+                        reversi::Side::Dark => score_light += ODD_CORNER_MALUS,
                     }
 
                 } else if let Some(disk) = *turn.get_cell(even_corner)? {
                     match disk.get_side() {
-                        Side::Light => score_light += EVEN_CORNER_BONUS,
-                        Side::Dark => score_dark += EVEN_CORNER_BONUS,
+                        reversi::Side::Light => score_light += EVEN_CORNER_BONUS,
+                        reversi::Side::Dark => score_dark += EVEN_CORNER_BONUS,
                     }
                 }
             }
